@@ -1,0 +1,39 @@
+<!-- Template básico para um produto individual -->
+<div class="produto">
+    <div class="produto-imagem">
+        {% if produto.local_image_path %}
+        <img src="file://{{ produto.local_image_path }}" alt="{{ produto.name }}" class="img">
+        {% else %}
+        <div class="sem-imagem">
+            <span>Sem imagem</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="produto-info">
+        <div class="info-principal">
+            <h3 class="nome">{{ produto.name }}</h3>
+            {% if produto.price %}
+            <div class="preco">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</div>
+            {% endif %}
+        </div>
+        
+        {% if produto.description %}
+        <p class="descricao">{{ produto.description }}</p>
+        {% endif %}
+        
+        {% if produto.category or produto.size or produto.color %}
+        <div class="detalhes">
+            {% if produto.category %}
+            <span class="detalhe"><strong>Categoria:</strong> {{ produto.category }}</span>
+            {% endif %}
+            {% if produto.size %}
+            <span class="detalhe"><strong>Tamanho:</strong> {{ produto.size }}</span>
+            {% endif %}
+            {% if produto.color %}
+            <span class="detalhe"><strong>Cor:</strong> {{ produto.color }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

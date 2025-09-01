@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Produtos - Lista</title>
+    <link rel="stylesheet" href="catalogo_lista.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho -->
+        <header class="header">
+            <div class="header-brand">
+                {% if logo_path %}
+                <img src="file://{{ logo_path }}" alt="Logo Thuca Kids" class="logo">
+                {% endif %}
+                <div class="brand-text">
+                    <h1 class="title">Thuca Kids</h1>
+                    <p class="subtitle">Catálogo - {{ data_geracao or "Janeiro 2025" }}</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <span class="total-products">{{ produtos|length }} produtos</span>
+            </div>
+        </header>
+
+        <!-- Lista de Produtos -->
+        <main class="products-list">
+            {% for produto in produtos %}
+            <div class="product-item{% if loop.first %} first-product{% endif %}">
+                <div class="product-image">
+                    {% if produto.local_image_path %}
+                    <img src="file://{{ produto.local_image_path }}" alt="{{ produto.name }}" class="product-img">
+                    {% else %}
+                    <div class="no-image">
+                        <span>Sem imagem</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="product-content">
+                    <div class="product-main-info">
+                        <h3 class="product-name">{{ produto.name }}</h3>
+                        
+                        {% if produto.price %}
+                        <div class="product-price">
+                            R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if produto.description %}
+                    <p class="product-description">{{ produto.description }}</p>
+                    {% endif %}
+                    
+                    <div class="product-details">
+                        {% if produto.category %}
+                        <span class="detail-item">
+                            <strong>Categoria:</strong> {{ produto.category }}
+                        </span>
+                        {% endif %}
+                        
+                        {% if produto.size %}
+                        <span class="detail-item">
+                            <strong>Tamanho:</strong> {{ produto.size }}
+                        </span>
+                        {% endif %}
+                        
+                        {% if produto.color %}
+                        <span class="detail-item">
+                            <strong>Cor:</strong> {{ produto.color }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </main>
+
+        <!-- Rodapé -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>Catálogo gerado automaticamente</p>
+                {% if contato %}
+                <p>Contato: {{ contato }}</p>
+                {% endif %}
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

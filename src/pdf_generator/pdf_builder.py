@@ -14,6 +14,7 @@ from reportlab.lib.enums import TA_CENTER
 from config.settings import PDF_CONFIG, OUTPUT_DIR
 from src.image_processing.image_optimizer import ImageOptimizer
 from src.pdf_generator.html_template_engine import HTMLTemplateEngine
+from src.color_schemes import ColorSchemeGenerator
 from src.logger import info, success, error, warning, debug, exception
 
 
@@ -26,6 +27,7 @@ class PDFBuilder:
         self.grid_config = PDF_CONFIG["grid"]
         self.image_optimizer = ImageOptimizer()
         self.html_engine = HTMLTemplateEngine()
+        self.color_generator = ColorSchemeGenerator()
         
         # Cria diretório de saída
         OUTPUT_DIR.mkdir(exist_ok=True)
@@ -324,7 +326,8 @@ class PDFBuilder:
     def generate_html_catalog(self, products: List[Dict[str, Any]], 
                              template_name: str = "catalogo_moderno.html",
                              output_filename: str = None,
-                             custom_context: Dict[str, Any] = None) -> bool:
+                             custom_context: Dict[str, Any] = None,
+                             color_scheme: str = None) -> bool:
         """
         Gera PDF usando template HTML/CSS
         
@@ -333,6 +336,7 @@ class PDFBuilder:
             template_name: Nome do template HTML
             output_filename: Nome do arquivo de saída
             custom_context: Contexto adicional para o template
+            color_scheme: Nome do esquema de cores a aplicar
         
         Returns:
             True se PDF foi gerado com sucesso
@@ -353,7 +357,8 @@ class PDFBuilder:
                 'produtos': products,
                 'titulo': 'Thuca Kids',
                 'data_geracao': self._get_portuguese_date(),
-                'total_produtos': len(products)
+                'total_produtos': len(products),
+                'logo_path': self._find_logo_file()
             }
             
             # Adiciona contexto customizado se fornecido
@@ -363,14 +368,42 @@ class PDFBuilder:
             # Determina arquivo CSS baseado no template
             css_file = template_name.replace('.html', '.css')
             
+            # Aplica esquema de cores se especificado
+            css_content = None
+            if color_scheme:
+                logo_path = self._find_logo_file()
+                if logo_path:
+                    # Gera esquemas baseados na logo
+                    color_schemes = self.color_generator.generate_color_schemes(logo_path)
+                    
+                    # Lê CSS original
+                    css_path = self.html_engine.templates_dir / css_file
+                    if css_path.exists():
+                        original_css = css_path.read_text(encoding='utf-8')
+                        # Aplica esquema de cores
+                        css_content = self.color_generator.apply_scheme_to_css(original_css, color_scheme)
+                        info(f"Aplicando esquema de cores: {color_scheme}")
+                    else:
+                        warning(f"Arquivo CSS não encontrado: {css_file}")
+            
             # Gera PDF usando template HTML
             output_path = OUTPUT_DIR / output_filename
-            success_flag = self.html_engine.generate_pdf_from_template(
-                template_name=template_name,
-                context=context,
-                css_file=css_file,
-                output_path=str(output_path)
-            )
+            if css_content:
+                # Usa CSS customizado com esquema de cores
+                html_content = self.html_engine.render_template(template_name, context)
+                success_flag = self.html_engine.generate_pdf_from_html(
+                    html_content=html_content,
+                    css_content=css_content,
+                    output_path=str(output_path)
+                )
+            else:
+                # Usa CSS padrão
+                success_flag = self.html_engine.generate_pdf_from_template(
+                    template_name=template_name,
+                    context=context,
+                    css_file=css_file,
+                    output_path=str(output_path)
+                )
             
             if success_flag:
                 success(f"Catálogo HTML gerado com sucesso: {output_path}")
@@ -459,6 +492,27 @@ class PDFBuilder:
         """
         return self.html_engine.list_available_templates()
     
+    def list_available_color_schemes(self, logo_path: str = None) -> Dict[str, str]:
+        """
+        Lista esquemas de cores disponíveis
+        
+        Args:
+            logo_path: Caminho para a logo (opcional)
+        
+        Returns:
+            Dicionário com esquemas disponíveis
+        """
+        if not logo_path:
+            logo_path = self._find_logo_file()
+        
+        if logo_path:
+            self.color_generator.generate_color_schemes(logo_path)
+            return self.color_generator.get_scheme_info()
+        else:
+            # Retorna esquemas padrão
+            default_schemes = self.color_generator._get_default_schemes()
+            return {key: scheme["name"] for key, scheme in default_schemes.items()}
+    
     def create_template_from_canva(self, template_name: str, html_content: str, 
                                   css_content: str = None) -> bool:
         """
@@ -473,6 +527,55 @@ class PDFBuilder:
             True se template foi criado com sucesso
         """
         return self.html_engine.create_template_from_canva(template_name, html_content, css_content)
+    
+    def _find_logo_file(self) -> Optional[str]:
+        """
+        Procura por arquivo de logo na pasta assets/logos
+        
+        Returns:
+            Caminho para o arquivo de logo ou None se não encontrado
+        """
+        try:
+            logo_dir = Path("assets/logos")
+            if not logo_dir.exists():
+                debug("Pasta de logos não encontrada")
+                return None
+            
+            # Lista de nomes prioritários para a logo
+            logo_names = [
+                "logo_principal",
+                "logo_horizontal", 
+                "logo",
+                "logo_thuca_kids",
+                "thuca_kids"
+            ]
+            
+            # Extensões suportadas
+            extensions = [".png", ".jpg", ".jpeg", ".svg"]
+            
+            # Procura pelos arquivos na ordem de prioridade
+            for name in logo_names:
+                for ext in extensions:
+                    logo_file = logo_dir / f"{name}{ext}"
+                    if logo_file.exists():
+                        absolute_path = logo_file.resolve()
+                        info(f"Logo encontrada: {absolute_path}")
+                        return str(absolute_path)
+            
+            # Se não encontrou pelos nomes específicos, pega qualquer arquivo de imagem
+            for ext in extensions:
+                logo_files = list(logo_dir.glob(f"*{ext}"))
+                if logo_files:
+                    absolute_path = logo_files[0].resolve()
+                    info(f"Logo encontrada (genérica): {absolute_path}")
+                    return str(absolute_path)
+            
+            debug("Nenhuma logo encontrada na pasta assets/logos")
+            return None
+            
+        except Exception as e:
+            exception("Erro ao procurar arquivo de logo", e)
+            return None
     
     def _get_portuguese_date(self) -> str:
         """

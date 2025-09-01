@@ -104,7 +104,8 @@ class CatalogBuilder:
                         output_filename: str = None, 
                         catalog_type: str = "grid",
                         template_name: str = None,
-                        custom_context: Dict[str, Any] = None) -> bool:
+                        custom_context: Dict[str, Any] = None,
+                        color_scheme: str = None) -> bool:
         """
         Gera catálogo em PDF
         
@@ -114,6 +115,7 @@ class CatalogBuilder:
             catalog_type: Tipo de catálogo ('grid', 'simple', 'html', 'canva')
             template_name: Nome do template HTML (para catalog_type='html')
             custom_context: Contexto adicional para templates HTML
+            color_scheme: Esquema de cores a aplicar
         
         Returns:
             True se catálogo foi gerado com sucesso
@@ -129,14 +131,21 @@ class CatalogBuilder:
             success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
         elif catalog_type == "html":
             template = template_name or "catalogo_moderno.html"
+            # Define esquema 'suave' como padrão se nenhum for especificado
+            default_scheme = color_scheme or "suave"
             success_flag = self.pdf_builder.generate_html_catalog(
-                products, template, output_filename, custom_context
+                products, template, output_filename, custom_context, default_scheme
             )
         elif catalog_type == "canva":
             error("Para usar templates do Canva, use o método generate_catalog_from_canva()")
             return False
-        else:  # grid (padrão)
-            success_flag = self.pdf_builder.generate_catalog(products, output_filename)
+        else:  # grid (padrão) - agora usa template simples otimizado
+            template = template_name or "catalogo_simples.html"
+            # Define esquema 'suave' como padrão se nenhum for especificado
+            default_scheme = color_scheme or "suave"
+            success_flag = self.pdf_builder.generate_html_catalog(
+                products, template, output_filename, custom_context, default_scheme
+            )
         
         if success_flag:
             output_path = OUTPUT_DIR / output_filename
@@ -174,7 +183,8 @@ class CatalogBuilder:
     
     def run_full_process(self, spreadsheet_id: str, sheet_name: str = "Sheet1", 
                         output_filename: str = None, catalog_type: str = "grid",
-                        download_images: bool = True, template_name: str = None) -> bool:
+                        download_images: bool = True, template_name: str = None,
+                        color_scheme: str = None) -> bool:
         """
         Executa processo completo de geração do catálogo
         
@@ -185,6 +195,7 @@ class CatalogBuilder:
             catalog_type: Tipo de catálogo
             download_images: Se deve baixar imagens
             template_name: Nome do template HTML (para catalog_type='html')
+            color_scheme: Esquema de cores a aplicar
         
         Returns:
             True se processo foi concluído com sucesso
@@ -210,7 +221,7 @@ class CatalogBuilder:
                     return False
             
             # 4. Gera catálogo
-            success_flag = self.generate_catalog(products, output_filename, catalog_type, template_name)
+            success_flag = self.generate_catalog(products, output_filename, catalog_type, template_name, None, color_scheme)
             
             # 5. Limpa arquivos temporários
             self.cleanup()
@@ -311,6 +322,17 @@ Variáveis de ambiente disponíveis:
     )
     
     parser.add_argument(
+        "--color-scheme", "-c",
+        help="Esquema de cores a aplicar (baseado na logo)"
+    )
+    
+    parser.add_argument(
+        "--list-schemes",
+        action="store_true",
+        help="Lista esquemas de cores disponíveis e sai"
+    )
+    
+    parser.add_argument(
         "--no-images",
         action="store_true",
         help="Não baixar imagens (sobrescreve DOWNLOAD_IMAGES do .env)"
@@ -322,6 +344,20 @@ Variáveis de ambiente disponíveis:
     )
     
     args = parser.parse_args()
+    
+    # Se solicitado listar esquemas de cores
+    if args.list_schemes:
+        from src.pdf_generator.pdf_builder import PDFBuilder
+        builder = PDFBuilder()
+        schemes = builder.list_available_color_schemes()
+        
+        section("Esquemas de Cores Disponíveis")
+        for key, name in schemes.items():
+            info(f"  {key}: {name}")
+        
+        print("\nUso: python main.py --color-scheme <nome_do_esquema>")
+        print("Exemplo: python main.py --color-scheme suave")
+        sys.exit(0)
     
     # Obtém configurações do .env
     config_data = get_config_from_env()
@@ -339,6 +375,8 @@ Variáveis de ambiente disponíveis:
         config_data['catalog_type'] = args.type
     if args.template:
         config_data['template_name'] = args.template
+    if args.color_scheme:
+        config_data['color_scheme'] = args.color_scheme
     if args.no_images:
         config_data['download_images'] = False
     
@@ -349,6 +387,8 @@ Variáveis de ambiente disponíveis:
     config("Tipo", config_data['catalog_type'])
     if config_data.get('template_name'):
         config("Template", config_data['template_name'])
+    color_scheme_display = config_data.get('color_scheme') or "suave (padrão)"
+    config("Esquema de cores", color_scheme_display)
     config("Baixar imagens", config_data['download_images'])
     if config_data['output_filename']:
         config("Arquivo de saída", config_data['output_filename'])
@@ -363,7 +403,8 @@ Variáveis de ambiente disponíveis:
         output_filename=config_data['output_filename'],
         catalog_type=config_data['catalog_type'],
         download_images=config_data['download_images'],
-        template_name=config_data.get('template_name')
+        template_name=config_data.get('template_name'),
+        color_scheme=config_data.get('color_scheme')
     )
     
     sys.exit(0 if success_flag else 1)

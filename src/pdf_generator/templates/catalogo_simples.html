@@ -3,56 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Simples</title>
+    <title>Catálogo de Produtos</title>
     <link rel="stylesheet" href="catalogo_simples.css">
 </head>
 <body>
     <div class="container">
-        <!-- Cabeçalho -->
-        <header class="header">
-            <h1>Thuca Kids</h1>
-            <p class="subtitle">Catálogo - {{ data_geracao or "Janeiro 2025" }}</p>
-            <p class="info">Total: {{ produtos|length }} produtos</p>
-        </header>
+            <!-- Cabeçalho -->
+    <header class="header">
+        {% if logo_path %}
+        <img src="file://{{ logo_path }}" alt="Logo da Empresa" class="logo">
+        {% endif %}
+    </header>
 
-        <!-- Lista de Produtos -->
+        <!-- Lista de Produtos usando template -->
         <main class="products-list">
             {% for produto in produtos %}
-            <div class="product-item">
-                <div class="product-content">
-                    <div class="product-image">
-                        {% if produto.local_image_path %}
-                        <img src="file://{{ produto.local_image_path }}" alt="{{ produto.name }}" class="product-img">
-                        {% else %}
-                        <div class="no-image">📷</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="product-details">
-                        <h3 class="product-name">{{ produto.name }}</h3>
-                        
-                        {% if produto.price %}
-                        <div class="product-price">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</div>
-                        {% endif %}
-                        
-                        {% if produto.description %}
-                        <p class="product-description">{{ produto.description }}</p>
-                        {% endif %}
-                        
-                        <div class="product-meta">
-                            {% if produto.category %}<span class="meta-item">📂 {{ produto.category }}</span>{% endif %}
-                            {% if produto.size %}<span class="meta-item">📏 {{ produto.size }}</span>{% endif %}
-                            {% if produto.color %}<span class="meta-item">🎨 {{ produto.color }}</span>{% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% include 'produto_item.html' %}
             {% endfor %}
         </main>
 
         <!-- Rodapé -->
         <footer class="footer">
-            <p>Catálogo gerado automaticamente</p>
+            <div class="footer-content">
+                <p>Catálogo gerado automaticamente</p>
+                {% if contato %}
+                <p>Contato: {{ contato }}</p>
+                {% endif %}
+            </div>
         </footer>
     </div>
 </body>
