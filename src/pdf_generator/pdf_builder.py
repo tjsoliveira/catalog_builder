@@ -15,6 +15,7 @@ from reportlab.lib import colors
 
 from config.settings import PDF_CONFIG, OUTPUT_DIR
 from src.image_processing.image_optimizer import ImageOptimizer
+from src.logger import info, success, error, warning, debug, exception
 
 
 class PDFBuilder:
@@ -98,26 +99,31 @@ class PDFBuilder:
             Lista de elementos do card
         """
         elements = []
+        product_name = product.get('name', 'Produto sem nome')
         
         # Imagem do produto
         if product.get("local_image_path") and Path(product["local_image_path"]).exists():
             try:
+                debug(f"Processando imagem do produto: {product_name}")
+                
                 # Otimiza imagem para PDF
                 img_data = self.image_optimizer.optimize_for_pdf(product["local_image_path"])
                 if img_data:
                     # Cria imagem temporária em memória
                     from io import BytesIO
                     img_buffer = BytesIO(img_data)
-                    img = Image(img_buffer, width=self.grid_config["image"]["max_width"], 
-                               height=self.grid_config["image"]["max_height"])
+                    img = Image(img_buffer, width=PDF_CONFIG["image"]["max_width"], 
+                               height=PDF_CONFIG["image"]["max_height"])
                     elements.append(img)
+                    success(f"Imagem processada com sucesso: {product_name}")
                 else:
-                    # Placeholder se imagem falhou
+                    warning(f"Falha ao otimizar imagem: {product_name}")
                     elements.append(Paragraph("Imagem não disponível", self.styles['ProductInfo']))
             except Exception as e:
-                print(f"Erro ao processar imagem do produto {product.get('name')}: {e}")
+                exception(f"Erro ao processar imagem do produto {product_name}", e)
                 elements.append(Paragraph("Imagem não disponível", self.styles['ProductInfo']))
         else:
+            warning(f"Imagem não encontrada para produto: {product_name}")
             elements.append(Paragraph("Imagem não disponível", self.styles['ProductInfo']))
         
         elements.append(Spacer(1, 6))
@@ -165,6 +171,8 @@ class PDFBuilder:
         elements = []
         columns = self.grid_config["columns"]
         
+        info(f"Criando grid com {len(products)} produtos em {columns} colunas")
+        
         # Agrupa produtos em linhas
         for i in range(0, len(products), columns):
             row_products = products[i:i + columns]
@@ -208,8 +216,10 @@ class PDFBuilder:
         """
         try:
             if not products:
-                print("Nenhum produto para gerar catálogo")
+                error("Nenhum produto para gerar catálogo")
                 return False
+            
+            info(f"Gerando catálogo com {len(products)} produtos")
             
             # Caminho completo do arquivo
             output_path = OUTPUT_DIR / output_filename
@@ -242,13 +252,13 @@ class PDFBuilder:
             # Gera PDF
             doc.build(elements)
             
-            print(f"Catálogo gerado com sucesso: {output_path}")
-            print(f"Total de produtos: {len(products)}")
+            success(f"Catálogo gerado com sucesso: {output_path}")
+            info(f"Total de produtos: {len(products)}")
             
             return True
             
         except Exception as e:
-            print(f"Erro ao gerar catálogo: {e}")
+            exception("Erro ao gerar catálogo", e)
             return False
     
     def generate_simple_catalog(self, products: List[Dict[str, Any]], output_filename: str = "catalogo_simples.pdf") -> bool:
@@ -264,8 +274,10 @@ class PDFBuilder:
         """
         try:
             if not products:
-                print("Nenhum produto para gerar catálogo")
+                error("Nenhum produto para gerar catálogo")
                 return False
+            
+            info(f"Gerando catálogo simples com {len(products)} produtos")
             
             output_path = OUTPUT_DIR / output_filename
             
@@ -302,9 +314,9 @@ class PDFBuilder:
             
             doc.build(elements)
             
-            print(f"Catálogo simples gerado: {output_path}")
+            success(f"Catálogo simples gerado: {output_path}")
             return True
             
         except Exception as e:
-            print(f"Erro ao gerar catálogo simples: {e}")
+            exception("Erro ao gerar catálogo simples", e)
             return False

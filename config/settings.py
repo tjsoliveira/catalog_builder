@@ -53,6 +53,7 @@ SHEETS_CONFIG = {
         "image_url": "URL da Imagem",
         "category": "Categoria",
         "size": "Tamanho",
-        "color": "Cor"
+        "color": "Cor",
+        "quantity": "Quantidade"
     }
 }

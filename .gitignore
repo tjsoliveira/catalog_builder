@@ -5,3 +5,9 @@ token.json
 # Arquivos de configuração local
 .env
 local_settings.py
+# Arquivo de variáveis de ambiente
+.env
+__pycache__/
+*.pdf
+logs/
+.DS_Store

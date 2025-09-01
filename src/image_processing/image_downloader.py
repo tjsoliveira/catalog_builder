@@ -10,6 +10,7 @@ import hashlib
 from urllib.parse import urlparse
 
 from config.settings import IMAGE_CONFIG
+from src.logger import info, success, error, warning, debug, exception
 
 
 class ImageDownloader:
@@ -60,11 +61,14 @@ class ImageDownloader:
         try:
             # Verifica se já foi baixada
             if url in self.downloaded_images:
+                debug(f"Imagem já baixada: {product_name}")
                 return self.downloaded_images[url]
             
             # Gera nome do arquivo
             filename = self._get_image_filename(url, product_name)
             filepath = self.temp_dir / filename
+            
+            debug(f"Baixando imagem: {product_name} de {url}")
             
             # Baixa a imagem
             headers = {
@@ -82,7 +86,7 @@ class ImageDownloader:
             # Verifica tamanho do arquivo
             content_length = response.headers.get('content-length')
             if content_length and int(content_length) > IMAGE_CONFIG["max_file_size"]:
-                print(f"Imagem muito grande para {product_name}: {content_length} bytes")
+                warning(f"Imagem muito grande para {product_name}: {content_length} bytes")
                 return None
             
             # Salva a imagem
@@ -90,25 +94,28 @@ class ImageDownloader:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            # Verifica se é uma imagem válida
+            # Verifica se é uma imagem válida (sem usar verify() que fecha o arquivo)
             try:
+                # Abre a imagem para verificar se é válida
                 with Image.open(filepath) as img:
-                    img.verify()
-            except Exception:
-                print(f"Arquivo baixado não é uma imagem válida: {product_name}")
+                    # Tenta carregar a imagem (isso valida se é uma imagem válida)
+                    img.load()
+                    debug(f"Imagem válida: {product_name} ({img.format}, {img.size})")
+            except Exception as e:
+                warning(f"Arquivo baixado não é uma imagem válida: {product_name} - {e}")
                 filepath.unlink(missing_ok=True)
                 return None
             
             # Adiciona ao cache
             self.downloaded_images[url] = filepath
-            print(f"Imagem baixada: {product_name} -> {filename}")
+            success(f"Imagem baixada: {product_name} -> {filename}")
             return filepath
             
         except requests.exceptions.RequestException as e:
-            print(f"Erro ao baixar imagem para {product_name}: {e}")
+            error(f"Erro ao baixar imagem para {product_name}: {e}")
             return None
         except Exception as e:
-            print(f"Erro inesperado ao baixar imagem para {product_name}: {e}")
+            exception(f"Erro inesperado ao baixar imagem para {product_name}", e)
             return None
     
     def download_product_images(self, products: List[dict]) -> List[dict]:
@@ -123,13 +130,17 @@ class ImageDownloader:
         """
         processed_products = []
         
-        for product in products:
+        info(f"Iniciando download de imagens para {len(products)} produtos")
+        
+        for i, product in enumerate(products, 1):
             image_url = product.get("image_url")
             product_name = product.get("name", "Produto")
             
             if not image_url:
-                print(f"Produto sem URL de imagem: {product_name}")
+                warning(f"Produto sem URL de imagem: {product_name}")
                 continue
+            
+            debug(f"Processando produto {i}/{len(products)}: {product_name}")
             
             # Baixa a imagem
             image_path = self.download_image(image_url, product_name)
@@ -140,22 +151,25 @@ class ImageDownloader:
                 product_copy["local_image_path"] = str(image_path)
                 processed_products.append(product_copy)
             else:
-                print(f"Falha ao baixar imagem para: {product_name}")
+                warning(f"Falha ao baixar imagem para: {product_name}")
         
+        success(f"Download concluído: {len(processed_products)}/{len(products)} imagens baixadas")
         return processed_products
     
     def cleanup_temp_images(self):
         """Remove todas as imagens temporárias"""
         try:
+            files_removed = 0
             for file_path in self.temp_dir.glob("*"):
                 if file_path.is_file():
                     file_path.unlink()
+                    files_removed += 1
             
             self.downloaded_images.clear()
-            print("Imagens temporárias removidas")
+            info(f"Imagens temporárias removidas: {files_removed} arquivos")
             
         except Exception as e:
-            print(f"Erro ao limpar imagens temporárias: {e}")
+            exception("Erro ao limpar imagens temporárias", e)
     
     def get_download_stats(self) -> dict:
         """

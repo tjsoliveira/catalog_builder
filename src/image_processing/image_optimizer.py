@@ -7,6 +7,7 @@ from PIL import Image, ImageOps
 import io
 
 from config.settings import PDF_CONFIG
+from src.logger import info, success, error, warning, debug, exception
 
 
 class ImageOptimizer:
@@ -33,9 +34,14 @@ class ImageOptimizer:
             max_width = max_width or self.max_width
             max_height = max_height or self.max_height
             
+            debug(f"Redimensionando imagem: {image_path}")
+            
             with Image.open(image_path) as img:
+                debug(f"Imagem original: {img.size}, modo: {img.mode}, formato: {img.format}")
+                
                 # Converte para RGB se necessário
                 if img.mode in ('RGBA', 'LA', 'P'):
+                    debug(f"Convertendo imagem de {img.mode} para RGB")
                     # Cria fundo branco para imagens com transparência
                     background = Image.new('RGB', img.size, (255, 255, 255))
                     if img.mode == 'P':
@@ -43,15 +49,22 @@ class ImageOptimizer:
                     background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                     img = background
                 elif img.mode != 'RGB':
+                    debug(f"Convertendo imagem de {img.mode} para RGB")
                     img = img.convert('RGB')
                 
                 # Calcula novo tamanho mantendo proporção
-                img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+                # Usa LANCZOS se disponível, senão usa ANTIALIAS (compatibilidade)
+                try:
+                    img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+                except AttributeError:
+                    # Fallback para versões mais antigas do Pillow
+                    img.thumbnail((max_width, max_height), Image.ANTIALIAS)
                 
+                debug(f"Imagem redimensionada: {img.size}")
                 return img.copy()
                 
         except Exception as e:
-            print(f"Erro ao redimensionar imagem {image_path}: {e}")
+            exception(f"Erro ao redimensionar imagem {image_path}", e)
             return None
     
     def create_thumbnail(self, image_path: str, size: Tuple[int, int] = (100, 100)) -> Optional[Image.Image]:
@@ -66,6 +79,8 @@ class ImageOptimizer:
             Thumbnail da imagem ou None se erro
         """
         try:
+            debug(f"Criando thumbnail: {image_path}")
+            
             with Image.open(image_path) as img:
                 # Converte para RGB se necessário
                 if img.mode in ('RGBA', 'LA', 'P'):
@@ -78,7 +93,11 @@ class ImageOptimizer:
                     img = img.convert('RGB')
                 
                 # Cria thumbnail com crop central
-                img.thumbnail(size, Image.Resampling.LANCZOS)
+                try:
+                    img.thumbnail(size, Image.Resampling.LANCZOS)
+                except AttributeError:
+                    # Fallback para versões mais antigas do Pillow
+                    img.thumbnail(size, Image.ANTIALIAS)
                 
                 # Se a imagem é menor que o tamanho desejado, centraliza
                 if img.size != size:
@@ -88,10 +107,11 @@ class ImageOptimizer:
                     new_img.paste(img, (paste_x, paste_y))
                     img = new_img
                 
+                debug(f"Thumbnail criado: {img.size}")
                 return img
                 
         except Exception as e:
-            print(f"Erro ao criar thumbnail {image_path}: {e}")
+            exception(f"Erro ao criar thumbnail {image_path}", e)
             return None
     
     def optimize_for_pdf(self, image_path: str) -> Optional[bytes]:
@@ -105,18 +125,24 @@ class ImageOptimizer:
             Bytes da imagem otimizada ou None se erro
         """
         try:
+            debug(f"Otimizando imagem para PDF: {image_path}")
+            
             # Redimensiona a imagem
             img = self.resize_image(image_path)
             if not img:
+                warning(f"Falha ao redimensionar imagem: {image_path}")
                 return None
             
             # Converte para bytes otimizados
             output = io.BytesIO()
             img.save(output, format='JPEG', quality=self.quality, optimize=True)
-            return output.getvalue()
+            optimized_data = output.getvalue()
+            
+            debug(f"Imagem otimizada: {len(optimized_data)} bytes")
+            return optimized_data
             
         except Exception as e:
-            print(f"Erro ao otimizar imagem para PDF {image_path}: {e}")
+            exception(f"Erro ao otimizar imagem para PDF {image_path}", e)
             return None
     
     def get_image_info(self, image_path: str) -> dict:
@@ -131,14 +157,16 @@ class ImageOptimizer:
         """
         try:
             with Image.open(image_path) as img:
-                return {
+                info_data = {
                     "size": img.size,
                     "mode": img.mode,
                     "format": img.format,
                     "file_size": Path(image_path).stat().st_size
                 }
+                debug(f"Informações da imagem {image_path}: {info_data}")
+                return info_data
         except Exception as e:
-            print(f"Erro ao obter informações da imagem {image_path}: {e}")
+            exception(f"Erro ao obter informações da imagem {image_path}", e)
             return {}
     
     def batch_optimize(self, image_paths: list) -> dict:
@@ -158,8 +186,12 @@ class ImageOptimizer:
             "total_size_after": 0
         }
         
-        for image_path in image_paths:
+        info(f"Iniciando otimização em lote de {len(image_paths)} imagens")
+        
+        for i, image_path in enumerate(image_paths, 1):
             try:
+                debug(f"Processando imagem {i}/{len(image_paths)}: {image_path}")
+                
                 # Informações antes da otimização
                 info_before = self.get_image_info(image_path)
                 results["total_size_before"] += info_before.get("file_size", 0)
@@ -170,11 +202,14 @@ class ImageOptimizer:
                 if optimized_data:
                     results["successful"].append(image_path)
                     results["total_size_after"] += len(optimized_data)
+                    success(f"Imagem {i} otimizada com sucesso")
                 else:
                     results["failed"].append(image_path)
+                    warning(f"Falha ao otimizar imagem {i}")
                     
             except Exception as e:
-                print(f"Erro ao processar {image_path}: {e}")
+                exception(f"Erro ao processar {image_path}", e)
                 results["failed"].append(image_path)
         
+        info(f"Otimização concluída: {len(results['successful'])} sucessos, {len(results['failed'])} falhas")
         return results

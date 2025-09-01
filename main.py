@@ -5,8 +5,13 @@ Script principal para gerar catálogo a partir do Google Sheets
 """
 import sys
 import argparse
+import os
 from pathlib import Path
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 # Adiciona src ao path
 sys.path.append(str(Path(__file__).parent / "src"))
@@ -16,6 +21,10 @@ from src.google_sheets.data_processor import DataProcessor
 from src.image_processing.image_downloader import ImageDownloader
 from src.pdf_generator.pdf_builder import PDFBuilder
 from config.settings import OUTPUT_DIR
+from src.logger import (
+    info, success, error, warning, debug, progress, 
+    section, config, stats, exception
+)
 
 
 class CatalogBuilder:
@@ -29,7 +38,7 @@ class CatalogBuilder:
     
     def authenticate_google_sheets(self) -> bool:
         """Autentica com Google Sheets"""
-        print("🔐 Autenticando com Google Sheets...")
+        info("Autenticando com Google Sheets...")
         return self.sheets_connector.authenticate()
     
     def fetch_products_data(self, spreadsheet_id: str, sheet_name: str = "Sheet1") -> List[Dict[str, Any]]:
@@ -43,29 +52,29 @@ class CatalogBuilder:
         Returns:
             Lista de produtos processados
         """
-        print(f"📊 Buscando dados da planilha: {spreadsheet_id}")
+        info(f"Buscando dados da planilha: {spreadsheet_id}")
         
         # Busca dados brutos
         raw_products = self.sheets_connector.get_products_data(spreadsheet_id, sheet_name)
         
         if not raw_products:
-            print("❌ Nenhum produto encontrado na planilha")
+            error("Nenhum produto encontrado na planilha")
             return []
         
-        print(f"📋 Encontrados {len(raw_products)} produtos na planilha")
+        info(f"Encontrados {len(raw_products)} produtos na planilha")
         
         # Processa dados
         processed_products = self.data_processor.process_products(raw_products)
         
         if not processed_products:
-            print("❌ Nenhum produto válido após processamento")
+            error("Nenhum produto válido após processamento")
             return []
         
-        print(f"✅ {len(processed_products)} produtos válidos processados")
+        success(f"{len(processed_products)} produtos válidos processados")
         
         # Mostra estatísticas
-        stats = self.data_processor.get_statistics(processed_products)
-        self._print_statistics(stats)
+        stats_data = self.data_processor.get_statistics(processed_products)
+        self._print_statistics(stats_data)
         
         return processed_products
     
@@ -79,16 +88,15 @@ class CatalogBuilder:
         Returns:
             Lista de produtos com imagens baixadas
         """
-        print("🖼️  Baixando imagens dos produtos...")
+        progress("Baixando imagens dos produtos...")
         
         products_with_images = self.image_downloader.download_product_images(products)
         
-        print(f"📸 {len(products_with_images)} imagens baixadas com sucesso")
+        success(f"{len(products_with_images)} imagens baixadas com sucesso")
         
         # Mostra estatísticas de download
         download_stats = self.image_downloader.get_download_stats()
-        print(f"📊 Estatísticas: {download_stats['downloaded_images']} imagens, "
-              f"{download_stats['total_size_mb']} MB")
+        stats(download_stats)
         
         return products_with_images
     
@@ -111,44 +119,46 @@ class CatalogBuilder:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_filename = f"catalogo_{timestamp}.pdf"
         
-        print(f"📄 Gerando catálogo: {output_filename}")
+        progress(f"Gerando catálogo: {output_filename}")
         
         if catalog_type == "simple":
-            success = self.pdf_builder.generate_simple_catalog(products, output_filename)
+            success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
         else:
-            success = self.pdf_builder.generate_catalog(products, output_filename)
+            success_flag = self.pdf_builder.generate_catalog(products, output_filename)
         
-        if success:
+        if success_flag:
             output_path = OUTPUT_DIR / output_filename
-            print(f"✅ Catálogo gerado com sucesso: {output_path}")
+            success(f"Catálogo gerado com sucesso: {output_path}")
             return True
         else:
-            print("❌ Erro ao gerar catálogo")
+            error("Erro ao gerar catálogo")
             return False
     
     def cleanup(self):
         """Limpa arquivos temporários"""
-        print("🧹 Limpando arquivos temporários...")
+        progress("Limpando arquivos temporários...")
         self.image_downloader.cleanup_temp_images()
     
-    def _print_statistics(self, stats: Dict[str, Any]):
+    def _print_statistics(self, stats_data: Dict[str, Any]):
         """Imprime estatísticas dos produtos"""
-        print("\n📊 Estatísticas dos Produtos:")
-        print(f"   Total: {stats['total_products']}")
+        info("Estatísticas dos Produtos:")
         
-        if stats['price_range']['min'] > 0:
-            print(f"   Preço: R$ {stats['price_range']['min']:.2f} - R$ {stats['price_range']['max']:.2f}")
-            print(f"   Média: R$ {stats['price_range']['average']:.2f}")
+        if stats_data.get('total_products'):
+            info(f"   Total: {stats_data['total_products']}")
         
-        if stats['categories']:
-            print(f"   Categorias: {len(stats['categories'])}")
+        if stats_data.get('price_range', {}).get('min', 0) > 0:
+            price_range = stats_data['price_range']
+            info(f"   Preço: R$ {price_range['min']:.2f} - R$ {price_range['max']:.2f}")
+            info(f"   Média: R$ {price_range['average']:.2f}")
         
-        if stats['sizes']:
-            print(f"   Tamanhos: {len(stats['sizes'])}")
+        if stats_data.get('categories'):
+            info(f"   Categorias: {len(stats_data['categories'])}")
         
-        if stats['colors']:
-            print(f"   Cores: {len(stats['colors'])}")
-        print()
+        if stats_data.get('sizes'):
+            info(f"   Tamanhos: {len(stats_data['sizes'])}")
+        
+        if stats_data.get('colors'):
+            info(f"   Cores: {len(stats_data['colors'])}")
     
     def run_full_process(self, spreadsheet_id: str, sheet_name: str = "Sheet1", 
                         output_filename: str = None, catalog_type: str = "grid",
@@ -167,12 +177,11 @@ class CatalogBuilder:
             True se processo foi concluído com sucesso
         """
         try:
-            print("🚀 Iniciando Catalog Builder...")
-            print("=" * 50)
+            section("Iniciando Catalog Builder")
             
             # 1. Autentica com Google Sheets
             if not self.authenticate_google_sheets():
-                print("❌ Falha na autenticação com Google Sheets")
+                error("Falha na autenticação com Google Sheets")
                 return False
             
             # 2. Busca dados dos produtos
@@ -184,82 +193,154 @@ class CatalogBuilder:
             if download_images:
                 products = self.download_product_images(products)
                 if not products:
-                    print("❌ Nenhum produto com imagem válida")
+                    error("Nenhum produto com imagem válida")
                     return False
             
             # 4. Gera catálogo
-            success = self.generate_catalog(products, output_filename, catalog_type)
+            success_flag = self.generate_catalog(products, output_filename, catalog_type)
             
             # 5. Limpa arquivos temporários
             self.cleanup()
             
-            if success:
-                print("=" * 50)
-                print("🎉 Processo concluído com sucesso!")
+            if success_flag:
+                section("Processo concluído com sucesso!")
                 return True
             else:
                 return False
                 
         except KeyboardInterrupt:
-            print("\n⏹️  Processo interrompido pelo usuário")
+            warning("Processo interrompido pelo usuário")
             self.cleanup()
             return False
         except Exception as e:
-            print(f"❌ Erro inesperado: {e}")
+            exception("Erro inesperado", e)
             self.cleanup()
             return False
+
+
+def get_config_from_env():
+    """
+    Obtém configurações das variáveis de ambiente
+    
+    Returns:
+        Dicionário com as configurações
+    """
+    config_data = {}
+    
+    # SPREADSHEET_ID é obrigatório
+    spreadsheet_id = os.getenv('SPREADSHEET_ID')
+    if not spreadsheet_id:
+        error("Variável SPREADSHEET_ID não encontrada no arquivo .env")
+        error("Configure a variável SPREADSHEET_ID no arquivo .env")
+        return None
+    
+    config_data['spreadsheet_id'] = spreadsheet_id
+    
+    # Configurações opcionais com valores padrão
+    config_data['sheet_name'] = os.getenv('SHEET_NAME', 'Sheet1')
+    config_data['output_filename'] = os.getenv('OUTPUT_FILENAME') or None
+    config_data['catalog_type'] = os.getenv('CATALOG_TYPE', 'grid')
+    config_data['download_images'] = os.getenv('DOWNLOAD_IMAGES', 'true').lower() == 'true'
+    
+    return config_data
 
 
 def main():
     """Função principal"""
     parser = argparse.ArgumentParser(
-        description="Catalog Builder - Gerador Automático de Catálogo de Roupas"
+        description="Catalog Builder - Gerador Automático de Catálogo de Roupas",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exemplos de uso:
+
+1. Usando variáveis de ambiente (recomendado):
+   Configure o arquivo .env com SPREADSHEET_ID e execute:
+   python main.py
+
+2. Sobrescrevendo configurações do .env:
+   python main.py --sheet-name "Produtos" --output "meu_catalogo.pdf"
+
+3. Modo simples (sem imagens):
+   python main.py --type simple --no-images
+
+Variáveis de ambiente disponíveis:
+- SPREADSHEET_ID: ID da planilha (obrigatório)
+- SHEET_NAME: Nome da aba (padrão: Sheet1)
+- OUTPUT_FILENAME: Nome do arquivo de saída
+- CATALOG_TYPE: Tipo de catálogo (grid/simple)
+- DOWNLOAD_IMAGES: Baixar imagens (true/false)
+        """
     )
     
-    parser.add_argument(
-        "spreadsheet_id",
-        help="ID da planilha do Google Sheets (da URL)"
-    )
-    
+    # Argumentos opcionais para sobrescrever configurações do .env
     parser.add_argument(
         "--sheet-name", "-s",
-        default="Sheet1",
-        help="Nome da aba da planilha (padrão: Sheet1)"
+        help="Nome da aba da planilha (sobrescreve SHEET_NAME do .env)"
     )
     
     parser.add_argument(
         "--output", "-o",
-        help="Nome do arquivo de saída (padrão: catalogo_YYYYMMDD_HHMMSS.pdf)"
+        help="Nome do arquivo de saída (sobrescreve OUTPUT_FILENAME do .env)"
     )
     
     parser.add_argument(
         "--type", "-t",
         choices=["grid", "simple"],
-        default="grid",
-        help="Tipo de catálogo: grid (com imagens) ou simple (lista)"
+        help="Tipo de catálogo: grid (com imagens) ou simple (lista) (sobrescreve CATALOG_TYPE do .env)"
     )
     
     parser.add_argument(
         "--no-images",
         action="store_true",
-        help="Não baixar imagens (gera catálogo simples)"
+        help="Não baixar imagens (sobrescreve DOWNLOAD_IMAGES do .env)"
+    )
+    
+    parser.add_argument(
+        "--spreadsheet-id",
+        help="ID da planilha (sobrescreve SPREADSHEET_ID do .env)"
     )
     
     args = parser.parse_args()
+    
+    # Obtém configurações do .env
+    config_data = get_config_from_env()
+    if not config_data:
+        sys.exit(1)
+    
+    # Sobrescreve com argumentos da linha de comando se fornecidos
+    if args.spreadsheet_id:
+        config_data['spreadsheet_id'] = args.spreadsheet_id
+    if args.sheet_name:
+        config_data['sheet_name'] = args.sheet_name
+    if args.output:
+        config_data['output_filename'] = args.output
+    if args.type:
+        config_data['catalog_type'] = args.type
+    if args.no_images:
+        config_data['download_images'] = False
+    
+    # Mostra configurações que serão usadas
+    section("Configurações")
+    config("Planilha", config_data['spreadsheet_id'])
+    config("Aba", config_data['sheet_name'])
+    config("Tipo", config_data['catalog_type'])
+    config("Baixar imagens", config_data['download_images'])
+    if config_data['output_filename']:
+        config("Arquivo de saída", config_data['output_filename'])
     
     # Cria instância do Catalog Builder
     builder = CatalogBuilder()
     
     # Executa processo completo
-    success = builder.run_full_process(
-        spreadsheet_id=args.spreadsheet_id,
-        sheet_name=args.sheet_name,
-        output_filename=args.output,
-        catalog_type=args.type,
-        download_images=not args.no_images
+    success_flag = builder.run_full_process(
+        spreadsheet_id=config_data['spreadsheet_id'],
+        sheet_name=config_data['sheet_name'],
+        output_filename=config_data['output_filename'],
+        catalog_type=config_data['catalog_type'],
+        download_images=config_data['download_images']
     )
     
-    sys.exit(0 if success else 1)
+    sys.exit(0 if success_flag else 1)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ Um sistema Python que conecta com Google Sheets, baixa dados e imagens das roupa
 - ✅ **Processamento de dados** - Valida e limpa informações dos produtos
 - ✅ **Múltiplos estilos** - Templates minimalista, elegante e moderno
 - ✅ **Totalmente automatizado** - Um comando gera o catálogo completo
+- ✅ **Configuração via variáveis de ambiente** - Configuração flexível e segura
 
 ## 🚀 Instalação
 
@@ -43,6 +44,25 @@ pip install -r requirements.txt
 5. Baixe o arquivo `credentials.json`
 6. Coloque o arquivo em `config/credentials.json`
 
+### 5. Configure as variáveis de ambiente
+
+1. Copie o arquivo de exemplo:
+```bash
+cp .env.example .env
+```
+
+2. Edite o arquivo `.env` e configure suas variáveis:
+```bash
+# ID da planilha (obrigatório)
+SPREADSHEET_ID=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+
+# Configurações opcionais
+SHEET_NAME=Sheet1
+OUTPUT_FILENAME=
+CATALOG_TYPE=grid
+DOWNLOAD_IMAGES=true
+```
+
 ## 📊 Estrutura do Google Sheets
 
 Sua planilha deve ter as seguintes colunas:
@@ -54,49 +74,42 @@ Sua planilha deve ter as seguintes colunas:
 
 ## 🎨 Uso
 
-### Comando Básico
+### Comando Básico (Recomendado)
 ```bash
-python main.py SPREADSHEET_ID
+python main.py
 ```
+O sistema usará as configurações do arquivo `.env`.
 
 ### Comandos Avançados
 ```bash
-# Especificar aba da planilha
-python main.py SPREADSHEET_ID --sheet-name "Produtos"
+# Sobrescrever configurações do .env
+python main.py --sheet-name "Produtos" --output "meu_catalogo.pdf"
 
 # Gerar catálogo simples (sem imagens)
-python main.py SPREADSHEET_ID --type simple
+python main.py --type simple --no-images
 
-# Nome personalizado do arquivo
-python main.py SPREADSHEET_ID --output "meu_catalogo.pdf"
-
-# Não baixar imagens
-python main.py SPREADSHEET_ID --no-images
+# Usar planilha diferente temporariamente
+python main.py --spreadsheet-id "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
 ```
 
 ### Exemplo Completo
 ```bash
-python main.py 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms --sheet-name "Estoque" --output "catalogo_2024.pdf"
-```
-
-## 📁 Estrutura do Projeto
-
-```
-catalog_builder/
-├── src/
-│   ├── google_sheets/          # Integração com Google Sheets
-│   ├── image_processing/       # Download e otimização de imagens
-│   └── pdf_generator/          # Geração de PDF
-├── config/
-│   ├── settings.py            # Configurações
-│   └── credentials.json       # Credenciais Google (não versionar)
-├── output/                    # PDFs gerados
-├── temp/                     # Imagens temporárias
-├── main.py                   # Script principal
-└── requirements.txt          # Dependências
+python main.py --sheet-name "Estoque" --output "catalogo_2024.pdf" --type grid
 ```
 
 ## ⚙️ Configurações
+
+### Variáveis de Ambiente (.env)
+
+| Variável | Obrigatório | Padrão | Descrição |
+|----------|-------------|--------|-----------|
+| `SPREADSHEET_ID` | ✅ | - | ID da planilha do Google Sheets |
+| `SHEET_NAME` | ❌ | Sheet1 | Nome da aba da planilha |
+| `OUTPUT_FILENAME` | ❌ | auto | Nome do arquivo de saída |
+| `CATALOG_TYPE` | ❌ | grid | Tipo: grid ou simple |
+| `DOWNLOAD_IMAGES` | ❌ | true | Baixar imagens: true/false |
+
+### Configurações do PDF (config/settings.py)
 
 Edite `config/settings.py` para personalizar:
 
@@ -124,7 +137,7 @@ Edite `config/settings.py` para personalizar:
 pip install -r requirements.txt
 
 # Executar com logs detalhados
-python main.py SPREADSHEET_ID --verbose
+python main.py --verbose
 ```
 
 ### Estrutura dos Módulos
@@ -141,6 +154,11 @@ python main.py SPREADSHEET_ID --verbose
 - Verifique se `credentials.json` está em `config/`
 - Confirme se a API do Google Sheets está ativada
 - Execute o script e autorize no navegador
+
+### Erro de Variáveis de Ambiente
+- Verifique se o arquivo `.env` existe
+- Confirme se `SPREADSHEET_ID` está configurado
+- Use `cp .env.example .env` para criar o arquivo
 
 ### Imagens não baixam
 - Verifique se as URLs estão corretas
