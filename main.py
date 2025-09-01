@@ -102,14 +102,18 @@ class CatalogBuilder:
     
     def generate_catalog(self, products: List[Dict[str, Any]], 
                         output_filename: str = None, 
-                        catalog_type: str = "grid") -> bool:
+                        catalog_type: str = "grid",
+                        template_name: str = None,
+                        custom_context: Dict[str, Any] = None) -> bool:
         """
         Gera catálogo em PDF
         
         Args:
             products: Lista de produtos
             output_filename: Nome do arquivo de saída
-            catalog_type: Tipo de catálogo ('grid' ou 'simple')
+            catalog_type: Tipo de catálogo ('grid', 'simple', 'html', 'canva')
+            template_name: Nome do template HTML (para catalog_type='html')
+            custom_context: Contexto adicional para templates HTML
         
         Returns:
             True se catálogo foi gerado com sucesso
@@ -123,7 +127,15 @@ class CatalogBuilder:
         
         if catalog_type == "simple":
             success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
-        else:
+        elif catalog_type == "html":
+            template = template_name or "catalogo_moderno.html"
+            success_flag = self.pdf_builder.generate_html_catalog(
+                products, template, output_filename, custom_context
+            )
+        elif catalog_type == "canva":
+            error("Para usar templates do Canva, use o método generate_catalog_from_canva()")
+            return False
+        else:  # grid (padrão)
             success_flag = self.pdf_builder.generate_catalog(products, output_filename)
         
         if success_flag:
@@ -162,7 +174,7 @@ class CatalogBuilder:
     
     def run_full_process(self, spreadsheet_id: str, sheet_name: str = "Sheet1", 
                         output_filename: str = None, catalog_type: str = "grid",
-                        download_images: bool = True) -> bool:
+                        download_images: bool = True, template_name: str = None) -> bool:
         """
         Executa processo completo de geração do catálogo
         
@@ -172,6 +184,7 @@ class CatalogBuilder:
             output_filename: Nome do arquivo de saída
             catalog_type: Tipo de catálogo
             download_images: Se deve baixar imagens
+            template_name: Nome do template HTML (para catalog_type='html')
         
         Returns:
             True se processo foi concluído com sucesso
@@ -197,7 +210,7 @@ class CatalogBuilder:
                     return False
             
             # 4. Gera catálogo
-            success_flag = self.generate_catalog(products, output_filename, catalog_type)
+            success_flag = self.generate_catalog(products, output_filename, catalog_type, template_name)
             
             # 5. Limpa arquivos temporários
             self.cleanup()
@@ -263,11 +276,14 @@ Exemplos de uso:
 3. Modo simples (sem imagens):
    python main.py --type simple --no-images
 
+4. Usando templates HTML/CSS:
+   python main.py --type html --template catalogo_moderno.html
+
 Variáveis de ambiente disponíveis:
 - SPREADSHEET_ID: ID da planilha (obrigatório)
 - SHEET_NAME: Nome da aba (padrão: Sheet1)
 - OUTPUT_FILENAME: Nome do arquivo de saída
-- CATALOG_TYPE: Tipo de catálogo (grid/simple)
+- CATALOG_TYPE: Tipo de catálogo (grid/simple/html)
 - DOWNLOAD_IMAGES: Baixar imagens (true/false)
         """
     )
@@ -285,8 +301,13 @@ Variáveis de ambiente disponíveis:
     
     parser.add_argument(
         "--type", "-t",
-        choices=["grid", "simple"],
-        help="Tipo de catálogo: grid (com imagens) ou simple (lista) (sobrescreve CATALOG_TYPE do .env)"
+        choices=["grid", "simple", "html"],
+        help="Tipo de catálogo: grid (com imagens), simple (lista) ou html (templates HTML/CSS) (sobrescreve CATALOG_TYPE do .env)"
+    )
+    
+    parser.add_argument(
+        "--template", "-T",
+        help="Nome do template HTML (para --type html)"
     )
     
     parser.add_argument(
@@ -316,6 +337,8 @@ Variáveis de ambiente disponíveis:
         config_data['output_filename'] = args.output
     if args.type:
         config_data['catalog_type'] = args.type
+    if args.template:
+        config_data['template_name'] = args.template
     if args.no_images:
         config_data['download_images'] = False
     
@@ -324,6 +347,8 @@ Variáveis de ambiente disponíveis:
     config("Planilha", config_data['spreadsheet_id'])
     config("Aba", config_data['sheet_name'])
     config("Tipo", config_data['catalog_type'])
+    if config_data.get('template_name'):
+        config("Template", config_data['template_name'])
     config("Baixar imagens", config_data['download_images'])
     if config_data['output_filename']:
         config("Arquivo de saída", config_data['output_filename'])
@@ -337,7 +362,8 @@ Variáveis de ambiente disponíveis:
         sheet_name=config_data['sheet_name'],
         output_filename=config_data['output_filename'],
         catalog_type=config_data['catalog_type'],
-        download_images=config_data['download_images']
+        download_images=config_data['download_images'],
+        template_name=config_data.get('template_name')
     )
     
     sys.exit(0 if success_flag else 1)

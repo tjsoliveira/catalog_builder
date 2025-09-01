@@ -3,18 +3,17 @@ Construtor de PDF para o catálogo
 """
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import mm
-from reportlab.lib.colors import HexColor, black, white
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
+from reportlab.lib.colors import HexColor
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.platypus.flowables import HRFlowable
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 
 from config.settings import PDF_CONFIG, OUTPUT_DIR
 from src.image_processing.image_optimizer import ImageOptimizer
+from src.pdf_generator.html_template_engine import HTMLTemplateEngine
 from src.logger import info, success, error, warning, debug, exception
 
 
@@ -26,6 +25,7 @@ class PDFBuilder:
         self.margins = PDF_CONFIG["margins"]
         self.grid_config = PDF_CONFIG["grid"]
         self.image_optimizer = ImageOptimizer()
+        self.html_engine = HTMLTemplateEngine()
         
         # Cria diretório de saída
         OUTPUT_DIR.mkdir(exist_ok=True)
@@ -320,3 +320,175 @@ class PDFBuilder:
         except Exception as e:
             exception("Erro ao gerar catálogo simples", e)
             return False
+    
+    def generate_html_catalog(self, products: List[Dict[str, Any]], 
+                             template_name: str = "catalogo_moderno.html",
+                             output_filename: str = None,
+                             custom_context: Dict[str, Any] = None) -> bool:
+        """
+        Gera PDF usando template HTML/CSS
+        
+        Args:
+            products: Lista de produtos
+            template_name: Nome do template HTML
+            output_filename: Nome do arquivo de saída
+            custom_context: Contexto adicional para o template
+        
+        Returns:
+            True se PDF foi gerado com sucesso
+        """
+        try:
+            if not products:
+                error("Nenhum produto para gerar catálogo")
+                return False
+            
+            if not output_filename:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_filename = f"catalogo_html_{timestamp}.pdf"
+            
+            info(f"Gerando catálogo HTML com {len(products)} produtos usando template: {template_name}")
+            
+            # Prepara contexto para o template
+            context = {
+                'produtos': products,
+                'titulo': 'Thuca Kids',
+                'data_geracao': self._get_portuguese_date(),
+                'total_produtos': len(products)
+            }
+            
+            # Adiciona contexto customizado se fornecido
+            if custom_context:
+                context.update(custom_context)
+            
+            # Determina arquivo CSS baseado no template
+            css_file = template_name.replace('.html', '.css')
+            
+            # Gera PDF usando template HTML
+            output_path = OUTPUT_DIR / output_filename
+            success_flag = self.html_engine.generate_pdf_from_template(
+                template_name=template_name,
+                context=context,
+                css_file=css_file,
+                output_path=str(output_path)
+            )
+            
+            if success_flag:
+                success(f"Catálogo HTML gerado com sucesso: {output_path}")
+                info(f"Template usado: {template_name}")
+                info(f"Total de produtos: {len(products)}")
+                return True
+            else:
+                error("Erro ao gerar catálogo HTML")
+                return False
+                
+        except Exception as e:
+            exception("Erro ao gerar catálogo HTML", e)
+            return False
+    
+    def generate_catalog_from_canva(self, products: List[Dict[str, Any]], 
+                                   html_content: str, css_content: str = None,
+                                   output_filename: str = None,
+                                   custom_context: Dict[str, Any] = None) -> bool:
+        """
+        Gera PDF a partir de template HTML/CSS criado no Canva
+        
+        Args:
+            products: Lista de produtos
+            html_content: Conteúdo HTML do Canva
+            css_content: Conteúdo CSS do Canva (opcional)
+            output_filename: Nome do arquivo de saída
+            custom_context: Contexto adicional para o template
+        
+        Returns:
+            True se PDF foi gerado com sucesso
+        """
+        try:
+            if not products:
+                error("Nenhum produto para gerar catálogo")
+                return False
+            
+            if not output_filename:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_filename = f"catalogo_canva_{timestamp}.pdf"
+            
+            info(f"Gerando catálogo a partir de template do Canva com {len(products)} produtos")
+            
+            # Prepara contexto para o template
+            context = {
+                'produtos': products,
+                'titulo': 'Thuca Kids',
+                'data_geracao': self._get_portuguese_date(),
+                'total_produtos': len(products)
+            }
+            
+            # Adiciona contexto customizado se fornecido
+            if custom_context:
+                context.update(custom_context)
+            
+            # Renderiza template com contexto
+            from jinja2 import Template
+            template = Template(html_content)
+            rendered_html = template.render(**context)
+            
+            # Gera PDF
+            output_path = OUTPUT_DIR / output_filename
+            success_flag = self.html_engine.generate_pdf_from_html(
+                html_content=rendered_html,
+                css_content=css_content,
+                output_path=str(output_path)
+            )
+            
+            if success_flag:
+                success(f"Catálogo do Canva gerado com sucesso: {output_path}")
+                info(f"Total de produtos: {len(products)}")
+                return True
+            else:
+                error("Erro ao gerar catálogo do Canva")
+                return False
+                
+        except Exception as e:
+            exception("Erro ao gerar catálogo do Canva", e)
+            return False
+    
+    def list_available_templates(self) -> List[str]:
+        """
+        Lista templates HTML disponíveis
+        
+        Returns:
+            Lista de nomes de templates
+        """
+        return self.html_engine.list_available_templates()
+    
+    def create_template_from_canva(self, template_name: str, html_content: str, 
+                                  css_content: str = None) -> bool:
+        """
+        Cria um novo template a partir de conteúdo HTML/CSS do Canva
+        
+        Args:
+            template_name: Nome do template (sem extensão)
+            html_content: Conteúdo HTML
+            css_content: Conteúdo CSS (opcional)
+        
+        Returns:
+            True se template foi criado com sucesso
+        """
+        return self.html_engine.create_template_from_canva(template_name, html_content, css_content)
+    
+    def _get_portuguese_date(self) -> str:
+        """
+        Retorna data atual formatada em português
+        
+        Returns:
+            String com mês e ano em português
+        """
+        months = {
+            1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+            5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+            9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+        }
+        
+        now = datetime.now()
+        month_name = months[now.month]
+        year = now.year
+        
+        return f"{month_name} {year}"
