@@ -1,0 +1,7 @@
+# Credenciais do Google (NÃO VERSIONAR)
+credentials.json
+token.json
+
+# Arquivos de configuração local
+.env
+local_settings.py
