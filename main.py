@@ -115,7 +115,7 @@ class CatalogBuilder:
             catalog_type: Tipo de catálogo ('grid', 'simple', 'html', 'canva')
             template_name: Nome do template HTML (para catalog_type='html')
             custom_context: Contexto adicional para templates HTML
-            color_scheme: Esquema de cores a aplicar
+            color_scheme: Esquema de cores a aplicar (analisa logo se disponível)
         
         Returns:
             True se catálogo foi gerado com sucesso
@@ -131,8 +131,8 @@ class CatalogBuilder:
             success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
         elif catalog_type == "html":
             template = template_name or "catalogo_simples.html"
-            # Define esquema 'suave' como padrão se nenhum for especificado
-            default_scheme = color_scheme or "suave"
+            # Define esquema 'default' como padrão se nenhum for especificado
+            default_scheme = color_scheme or "default"
             success_flag = self.pdf_builder.generate_html_catalog(
                 products, template, output_filename, custom_context, default_scheme
             )
@@ -141,8 +141,8 @@ class CatalogBuilder:
             return False
         else:  # grid (padrão) - agora usa template simples otimizado
             template = template_name or "catalogo_simples.html"
-            # Define esquema 'suave' como padrão se nenhum for especificado
-            default_scheme = color_scheme or "suave"
+            # Define esquema 'default' como padrão se nenhum for especificado
+            default_scheme = color_scheme or "default"
             success_flag = self.pdf_builder.generate_html_catalog(
                 products, template, output_filename, custom_context, default_scheme
             )

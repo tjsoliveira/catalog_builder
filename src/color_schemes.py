@@ -78,23 +78,33 @@ class ColorSchemeGenerator:
             colors.append(self.rgb_to_hex((r, g, b)))
         return colors
     
-    def generate_color_schemes(self, logo_path: str) -> Dict[str, Dict[str, str]]:
+    def generate_color_schemes(self, logo_path: str = None) -> Dict[str, Dict[str, str]]:
         """
-        Gera diferentes esquemas de cores baseados na logo
+        Gera diferentes esquemas de cores baseados na logo ou usa esquemas padrão
         
         Args:
-            logo_path: Caminho para o arquivo da logo
+            logo_path: Caminho para o arquivo da logo (opcional)
         
         Returns:
             Dicionário com esquemas de cores
         """
         try:
-            # Analisa cores da logo
+            # Se não tem logo, usa esquemas padrão
+            if not logo_path:
+                info("Usando esquemas de cores padrão")
+                schemes = self._get_default_schemes()
+                self.color_schemes = schemes
+                return schemes
+                
+            # Tenta analisar a logo
             palette = self.analyze_logo_colors(logo_path)
             
             if not palette:
                 # Esquema padrão se não conseguir analisar
-                return self._get_default_schemes()
+                warning("Não foi possível analisar cores da logo, usando esquemas padrão")
+                schemes = self._get_default_schemes()
+                self.color_schemes = schemes
+                return schemes
             
             primary = palette[0]  # Cor dominante
             secondary = palette[1] if len(palette) > 1 else primary
@@ -107,59 +117,43 @@ class ColorSchemeGenerator:
             accent_light = self.lighten_color(accent, 0.6)
             
             schemes = {
-                "classico": {
-                    "name": "Clássico",
-                    "background": "#ffffff",
-                    "header_bg": self.rgb_to_hex(primary_light),
-                    "border_color": self.rgb_to_hex(primary),
-                    "accent_color": self.rgb_to_hex(accent),
-                    "text_primary": "#2c3e50",
-                    "text_secondary": "#7f8c8d",
-                    "price_color": "#e74c3c"
-                },
-                
-                "suave": {
-                    "name": "Suave",
-                    "background": self.rgb_to_hex(primary_light),
-                    "header_bg": "#ffffff",
-                    "border_color": self.rgb_to_hex(primary),
-                    "accent_color": self.rgb_to_hex(secondary),
-                    "text_primary": self.rgb_to_hex(primary_dark),
-                    "text_secondary": self.rgb_to_hex(primary),
-                    "price_color": self.rgb_to_hex(accent)
-                },
-                
-                "moderno": {
-                    "name": "Moderno",
-                    "background": f"linear-gradient(135deg, {self.rgb_to_hex(primary_light)} 0%, {self.rgb_to_hex(secondary_light)} 100%)",
-                    "header_bg": self.rgb_to_hex(primary_dark),
-                    "border_color": self.rgb_to_hex(accent),
-                    "accent_color": self.rgb_to_hex(secondary),
-                    "text_primary": "#ffffff",
-                    "text_secondary": self.rgb_to_hex(accent_light),
-                    "price_color": "#ffffff"
-                },
-                
-                "elegante": {
-                    "name": "Elegante",
-                    "background": "#f8f9fa",
-                    "header_bg": self.rgb_to_hex(primary_dark),
-                    "border_color": self.rgb_to_hex(primary),
-                    "accent_color": self.rgb_to_hex(accent),
-                    "text_primary": self.rgb_to_hex(primary_dark),
-                    "text_secondary": "#6c757d",
-                    "price_color": self.rgb_to_hex(primary)
-                },
-                
-                "vibrante": {
-                    "name": "Vibrante",
-                    "background": "#ffffff",
-                    "header_bg": f"linear-gradient(90deg, {self.rgb_to_hex(primary)} 0%, {self.rgb_to_hex(secondary)} 100%)",
-                    "border_color": self.rgb_to_hex(accent),
-                    "accent_color": self.rgb_to_hex(primary),
+                "default": {
+                    "name": "Padrão",
+                    "background": "#333333",        # Fundo da página
+                    "product_bg": "#F8F9FA",        # Fundo dos cards de produto
+                    "header_bg": "#333333",         # Laranja chamativo
+                    "border_color": "#00A79D",      # Turquesa
+                    "accent_color": "#6BC0C9",      # Azul claro
                     "text_primary": "#333333",
-                    "text_secondary": "#666666",
-                    "price_color": self.rgb_to_hex(accent)
+                    "text_secondary": "#6BC0C9",    # Azul claro
+                    "price_color": "#6BC0C9",       # Roxo forte
+                    "highlight_color": "#7AD0E0"    # Azul bebê
+                },
+                
+                "dark_mode": {
+                    "name": "Modo Escuro",
+                    "background": "#1C1C1C",        # Fundo da página
+                    "product_bg": "#2D2D2D",        # Fundo dos cards de produto
+                    "header_bg": "#F28E30",         # Laranja chamativo
+                    "border_color": "#00A79D",      # Turquesa
+                    "accent_color": "#7AD0E0",      # Azul bebê
+                    "text_primary": "#FFFFFF",
+                    "text_secondary": "#7AD0E0",    # Azul bebê
+                    "price_color": "#7F4C9E",       # Roxo forte
+                    "highlight_color": "#6BC0C9"    # Azul claro
+                },
+                
+                "minimal": {
+                    "name": "Minimalista",
+                    "background": "#F8F8F8",        # Fundo da página
+                    "product_bg": "#FFFFFF",        # Fundo dos cards de produto
+                    "header_bg": "#333333",
+                    "border_color": "#DDDDDD",
+                    "accent_color": "#00A79D",      # Turquesa
+                    "text_primary": "#333333",
+                    "text_secondary": "#6BC0C9",    # Azul claro
+                    "price_color": "#F28E30",       # Laranja chamativo
+                    "highlight_color": "#00A79D"    # Turquesa
                 }
             }
             
@@ -175,37 +169,43 @@ class ColorSchemeGenerator:
     def _get_default_schemes(self) -> Dict[str, Dict[str, str]]:
         """Retorna esquemas de cores padrão"""
         return {
-            "classico": {
-                "name": "Clássico",
-                "background": "#ffffff",
-                "header_bg": "#f8f9fa",
-                "border_color": "#e74c3c",
-                "accent_color": "#3498db",
-                "text_primary": "#2c3e50",
-                "text_secondary": "#7f8c8d",
-                "price_color": "#e74c3c"
+            "default": {
+                "name": "Padrão",
+                "background": "#F28E30",        # Fundo da página
+                "product_bg": "#F28E30",        # Fundo dos cards de produto
+                "header_bg": "#333333",         # Laranja chamativo
+                "border_color": "#00A79D",      # Turquesa
+                "accent_color": "#6BC0C9",      # Azul claro
+                "text_primary": "#333333",
+                "text_secondary": "#6BC0C9",    # Azul claro
+                "price_color": "#7F4C9E",       # Roxo forte
+                "highlight_color": "#7AD0E0"    # Azul bebê
             },
             
-            "azul": {
-                "name": "Azul Profissional",
-                "background": "#f0f4f8",
-                "header_bg": "#2c5282",
-                "border_color": "#3182ce",
-                "accent_color": "#4299e1",
-                "text_primary": "#1a202c",
-                "text_secondary": "#4a5568",
-                "price_color": "#e53e3e"
+            "dark_mode": {
+                "name": "Modo Escuro",
+                "background": "#1C1C1C",        # Fundo da página
+                "product_bg": "#2D2D2D",        # Fundo dos cards de produto
+                "header_bg": "#F28E30",         # Laranja chamativo
+                "border_color": "#00A79D",      # Turquesa
+                "accent_color": "#7AD0E0",      # Azul bebê
+                "text_primary": "#FFFFFF",
+                "text_secondary": "#7AD0E0",    # Azul bebê
+                "price_color": "#7F4C9E",       # Roxo forte
+                "highlight_color": "#6BC0C9"    # Azul claro
             },
             
-            "verde": {
-                "name": "Verde Natureza",
-                "background": "#f0fff4",
-                "header_bg": "#22543d",
-                "border_color": "#38a169",
-                "accent_color": "#48bb78",
-                "text_primary": "#1a202c",
-                "text_secondary": "#4a5568",
-                "price_color": "#e53e3e"
+            "minimal": {
+                "name": "Minimalista",
+                "background": "#F8F8F8",        # Fundo da página
+                "product_bg": "#FFFFFF",        # Fundo dos cards de produto
+                "header_bg": "#333333",
+                "border_color": "#DDDDDD",
+                "accent_color": "#00A79D",      # Turquesa
+                "text_primary": "#333333",
+                "text_secondary": "#6BC0C9",    # Azul claro
+                "price_color": "#F28E30",       # Laranja chamativo
+                "highlight_color": "#00A79D"    # Turquesa
             }
         }
     
@@ -245,6 +245,9 @@ class ColorSchemeGenerator:
             "color: #7f8c8d;": f"color: {scheme['text_secondary']};",
             "color: #e74c3c;": f"color: {scheme['price_color']};",
             "border-left: 2px solid #3498db;": f"border-left: 2px solid {scheme['accent_color']};",
+            "background-color: #f8f9fa;": f"background-color: {scheme.get('product_bg', scheme['background'])};",
+            "color: #333;": f"color: {scheme['text_primary']};",
+            "color: #666;": f"color: {scheme['text_secondary']};",
         }
         
         for old, new in replacements.items():
@@ -267,6 +270,50 @@ html, body {{
 .container {{
     background: {scheme['background']};
     min-height: 100vh;
+}}
+
+/* Estilos específicos do esquema de cores */
+.header {{
+    background-color: {scheme.get('header_bg', scheme['background'])} !important;
+    color: {scheme['text_primary']} !important;
+}}
+
+.header .title {{
+    color: {scheme['text_primary']} !important;
+}}
+
+.header .subtitle {{
+    color: {scheme['text_secondary']} !important;
+}}
+
+.produto {{
+    background-color: {scheme.get('product_bg', scheme['background'])} !important;
+    border-color: {scheme['border_color']} !important;
+}}
+
+.produto .nome {{
+    color: {scheme['text_primary']} !important;
+}}
+
+.produto .descricao {{
+    color: {scheme['text_secondary']} !important;
+}}
+
+.produto .preco {{
+    color: {scheme['price_color']} !important;
+}}
+
+.produto .detalhe {{
+    color: {scheme['text_secondary']} !important;
+}}
+
+/* Highlight color para elementos especiais */
+.highlight {{
+    color: {scheme.get('highlight_color', scheme['accent_color'])} !important;
+}}
+
+.accent-border {{
+    border-color: {scheme['accent_color']} !important;
 }}
 """
         

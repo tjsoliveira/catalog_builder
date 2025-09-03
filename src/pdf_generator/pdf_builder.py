@@ -372,19 +372,18 @@ class PDFBuilder:
             css_content = None
             if color_scheme:
                 logo_path = self._find_logo_file()
-                if logo_path:
-                    # Gera esquemas baseados na logo
-                    color_schemes = self.color_generator.generate_color_schemes(logo_path)
-                    
-                    # Lê CSS original
-                    css_path = self.html_engine.templates_dir / css_file
-                    if css_path.exists():
-                        original_css = css_path.read_text(encoding='utf-8')
-                        # Aplica esquema de cores
-                        css_content = self.color_generator.apply_scheme_to_css(original_css, color_scheme)
-                        info(f"Aplicando esquema de cores: {color_scheme}")
-                    else:
-                        warning(f"Arquivo CSS não encontrado: {css_file}")
+                # Gera esquemas (analisa logo se disponível, senão usa padrão)
+                color_schemes = self.color_generator.generate_color_schemes(logo_path)
+                
+                # Lê CSS original
+                css_path = self.html_engine.templates_dir / css_file
+                if css_path.exists():
+                    original_css = css_path.read_text(encoding='utf-8')
+                    # Aplica esquema de cores
+                    css_content = self.color_generator.apply_scheme_to_css(original_css, color_scheme)
+                    info(f"Aplicando esquema de cores: {color_scheme}")
+                else:
+                    warning(f"Arquivo CSS não encontrado: {css_file}")
             
             # Gera PDF usando template HTML
             output_path = OUTPUT_DIR / output_filename
@@ -505,13 +504,9 @@ class PDFBuilder:
         if not logo_path:
             logo_path = self._find_logo_file()
         
-        if logo_path:
-            self.color_generator.generate_color_schemes(logo_path)
-            return self.color_generator.get_scheme_info()
-        else:
-            # Retorna esquemas padrão
-            default_schemes = self.color_generator._get_default_schemes()
-            return {key: scheme["name"] for key, scheme in default_schemes.items()}
+        # Gera esquemas (analisa logo se disponível, senão usa padrão)
+        self.color_generator.generate_color_schemes(logo_path)
+        return self.color_generator.get_scheme_info()
     
     def create_template_from_canva(self, template_name: str, html_content: str, 
                                   css_content: str = None) -> bool:
