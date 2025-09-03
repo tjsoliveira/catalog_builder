@@ -23,9 +23,8 @@ def generate_catalogs_for_all_schemes():
     config = {
         'spreadsheet_id': os.getenv('SPREADSHEET_ID'),
         'sheet_name': os.getenv('SHEET_NAME', 'Sheet1'),
-        'catalog_type': 'html',
         'download_images': True,
-        'template_name': 'catalogo_simples.html'
+        'columns': int(os.getenv('COLUMNS', '3'))
     }
     
     if not config['spreadsheet_id']:
@@ -49,10 +48,9 @@ def generate_catalogs_for_all_schemes():
                 spreadsheet_id=config['spreadsheet_id'],
                 sheet_name=config['sheet_name'],
                 output_filename=output_filename,
-                catalog_type=config['catalog_type'],
                 download_images=config['download_images'],
-                template_name=config['template_name'],
-                color_scheme=scheme
+                color_scheme=scheme,
+                columns=config['columns']
             )
             
             if success_flag:

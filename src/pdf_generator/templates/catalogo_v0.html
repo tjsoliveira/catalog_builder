@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo or 'Catálogo de Produtos' }}</title>
+    <link rel="stylesheet" href="catalogo_v0.css">
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+        
+        .item-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        
+        .item-image {
+            aspect-ratio: 3/4;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="bg-white p-6">
+    <!-- Cabeçalho do Catálogo -->
+    <header class="text-center mb-8 border-b-2 border-gray-200 pb-6">
+        {% if logo_path %}
+        <div class="mb-4">
+            <img src="file://{{ logo_path }}" alt="Logo" class="logo mx-auto">
+        </div>
+        {% endif %}
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ titulo or 'Catálogo de Produtos' }}</h1>
+        {% if subtitulo %}
+        <p class="text-gray-600">{{ subtitulo }}</p>
+        {% endif %}
+    </header>
+
+    <!-- Grid de Produtos -->
+    <div class="grid gap-6" style="grid-template-columns: repeat({{ columns or 3 }}, 1fr);">
+        {% for produto in produtos %}
+        <div class="item-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="relative">
+                {% if produto.local_image_path %}
+                <img src="file://{{ produto.local_image_path }}" 
+                     alt="{{ produto.name }}" 
+                     class="item-image w-full bg-gray-100">
+                {% else %}
+                <div class="item-image w-full bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-sm">Sem imagem</span>
+                </div>
+                {% endif %}
+                
+                <!-- Badge de destaque (opcional) -->
+                {% if produto.destaque %}
+                <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                    {{ produto.destaque }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-800 mb-1">{{ produto.name }}</h3>
+                
+                <!-- Informações do produto -->
+                <div class="text-sm text-gray-600 mb-2">
+                    {% if produto.size %}
+                    <p>Tamanhos: {{ produto.size }}</p>
+                    {% endif %}
+                    {% if produto.color %}
+                    <p>Cores: {{ produto.color }}</p>
+                    {% endif %}
+                    {% if produto.descricao %}
+                    <p class="mt-1">{{ produto.descricao }}</p>
+                    {% endif %}
+                </div>
+                
+                <p class="text-lg font-bold text-gray-900">{{ produto.preco }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="mt-12 pt-6 border-t-2 border-gray-200 text-center text-sm text-gray-600">
+        {% if contato %}
+        <p>{{ contato }}</p>
+        {% endif %}
+        {% if endereco %}
+        <p class="mt-1">{{ endereco }}</p>
+        {% endif %}
+    </footer>
+</body>
+</html>

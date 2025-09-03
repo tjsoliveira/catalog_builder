@@ -102,20 +102,18 @@ class CatalogBuilder:
     
     def generate_catalog(self, products: List[Dict[str, Any]], 
                         output_filename: str = None, 
-                        catalog_type: str = "grid",
-                        template_name: str = None,
                         custom_context: Dict[str, Any] = None,
-                        color_scheme: str = None) -> bool:
+                        color_scheme: str = None,
+                        columns: int = 3) -> bool:
         """
-        Gera catálogo em PDF
+        Gera catálogo em PDF usando template moderno
         
         Args:
             products: Lista de produtos
             output_filename: Nome do arquivo de saída
-            catalog_type: Tipo de catálogo ('grid', 'simple', 'html', 'canva')
-            template_name: Nome do template HTML (para catalog_type='html')
             custom_context: Contexto adicional para templates HTML
             color_scheme: Esquema de cores a aplicar (analisa logo se disponível)
+            columns: Número de colunas no grid (padrão: 3)
         
         Returns:
             True se catálogo foi gerado com sucesso
@@ -127,25 +125,19 @@ class CatalogBuilder:
         
         progress(f"Gerando catálogo: {output_filename}")
         
-        if catalog_type == "simple":
-            success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
-        elif catalog_type == "html":
-            template = template_name or "catalogo_simples.html"
-            # Define esquema 'default' como padrão se nenhum for especificado
-            default_scheme = color_scheme or "default"
-            success_flag = self.pdf_builder.generate_html_catalog(
-                products, template, output_filename, custom_context, default_scheme
-            )
-        elif catalog_type == "canva":
-            error("Para usar templates do Canva, use o método generate_catalog_from_canva()")
-            return False
-        else:  # grid (padrão) - agora usa template simples otimizado
-            template = template_name or "catalogo_simples.html"
-            # Define esquema 'default' como padrão se nenhum for especificado
-            default_scheme = color_scheme or "default"
-            success_flag = self.pdf_builder.generate_html_catalog(
-                products, template, output_filename, custom_context, default_scheme
-            )
+        # Usa sempre o template v0 (moderno e elegante)
+        template = "catalogo_v0.html"
+        # Define esquema 'default' como padrão se nenhum for especificado
+        default_scheme = color_scheme or "default"
+        
+        # Adiciona o número de colunas ao contexto
+        if custom_context is None:
+            custom_context = {}
+        custom_context['columns'] = columns
+        
+        success_flag = self.pdf_builder.generate_html_catalog(
+            products, template, output_filename, custom_context, default_scheme
+        )
         
         if success_flag:
             output_path = OUTPUT_DIR / output_filename
@@ -182,9 +174,8 @@ class CatalogBuilder:
             info(f"   Cores: {len(stats_data['colors'])}")
     
     def run_full_process(self, spreadsheet_id: str, sheet_name: str = "Sheet1", 
-                        output_filename: str = None, catalog_type: str = "grid",
-                        download_images: bool = True, template_name: str = None,
-                        color_scheme: str = None) -> bool:
+                        output_filename: str = None, download_images: bool = True,
+                        color_scheme: str = None, columns: int = 3) -> bool:
         """
         Executa processo completo de geração do catálogo
         
@@ -192,10 +183,9 @@ class CatalogBuilder:
             spreadsheet_id: ID da planilha
             sheet_name: Nome da aba
             output_filename: Nome do arquivo de saída
-            catalog_type: Tipo de catálogo
             download_images: Se deve baixar imagens
-            template_name: Nome do template HTML (para catalog_type='html')
             color_scheme: Esquema de cores a aplicar
+            columns: Número de colunas no grid (padrão: 3)
         
         Returns:
             True se processo foi concluído com sucesso
@@ -221,7 +211,7 @@ class CatalogBuilder:
                     return False
             
             # 4. Gera catálogo
-            success_flag = self.generate_catalog(products, output_filename, catalog_type, template_name, None, color_scheme)
+            success_flag = self.generate_catalog(products, output_filename, None, color_scheme, columns)
             
             # 5. Limpa arquivos temporários
             self.cleanup()
@@ -263,8 +253,8 @@ def get_config_from_env():
     # Configurações opcionais com valores padrão
     config_data['sheet_name'] = os.getenv('SHEET_NAME', 'Sheet1')
     config_data['output_filename'] = os.getenv('OUTPUT_FILENAME') or None
-    config_data['catalog_type'] = os.getenv('CATALOG_TYPE', 'grid')
     config_data['download_images'] = os.getenv('DOWNLOAD_IMAGES', 'true').lower() == 'true'
+    config_data['columns'] = int(os.getenv('COLUMNS', '3'))
     
     return config_data
 
@@ -284,18 +274,20 @@ Exemplos de uso:
 2. Sobrescrevendo configurações do .env:
    python main.py --sheet-name "Produtos" --output "meu_catalogo.pdf"
 
-3. Modo simples (sem imagens):
-   python main.py --type simple --no-images
+3. Com número de colunas personalizado:
+   python main.py --columns 2
 
-4. Usando templates HTML/CSS:
-   python main.py --type html --template catalogo_simples.html
+4. Com esquema de cores específico:
+   python main.py --color-scheme dark_mode
 
 Variáveis de ambiente disponíveis:
 - SPREADSHEET_ID: ID da planilha (obrigatório)
 - SHEET_NAME: Nome da aba (padrão: Sheet1)
 - OUTPUT_FILENAME: Nome do arquivo de saída
-- CATALOG_TYPE: Tipo de catálogo (grid/simple/html)
+- CONTATO: Informações de contato (ex: "Loja • Tel: (11) 9999-9999")
+- ENDERECO: Endereço da loja (ex: "Rua das Flores, 123 - Centro - SP")
 - DOWNLOAD_IMAGES: Baixar imagens (true/false)
+- COLUMNS: Número de colunas no grid (padrão: 3)
         """
     )
     
@@ -311,14 +303,10 @@ Variáveis de ambiente disponíveis:
     )
     
     parser.add_argument(
-        "--type", "-t",
-        choices=["grid", "simple", "html"],
-        help="Tipo de catálogo: grid (com imagens), simple (lista) ou html (templates HTML/CSS) (sobrescreve CATALOG_TYPE do .env)"
-    )
-    
-    parser.add_argument(
-        "--template", "-T",
-        help="Nome do template HTML (para --type html)"
+        "--columns", "-col",
+        type=int,
+        default=3,
+        help="Número de colunas no grid (padrão: 3)"
     )
     
     parser.add_argument(
@@ -371,10 +359,8 @@ Variáveis de ambiente disponíveis:
         config_data['sheet_name'] = args.sheet_name
     if args.output:
         config_data['output_filename'] = args.output
-    if args.type:
-        config_data['catalog_type'] = args.type
-    if args.template:
-        config_data['template_name'] = args.template
+    if args.columns:
+        config_data['columns'] = args.columns
     if args.color_scheme:
         config_data['color_scheme'] = args.color_scheme
     if args.no_images:
@@ -384,9 +370,7 @@ Variáveis de ambiente disponíveis:
     section("Configurações")
     config("Planilha", config_data['spreadsheet_id'])
     config("Aba", config_data['sheet_name'])
-    config("Tipo", config_data['catalog_type'])
-    if config_data.get('template_name'):
-        config("Template", config_data['template_name'])
+    config("Colunas", config_data['columns'])
     color_scheme_display = config_data.get('color_scheme') or "suave (padrão)"
     config("Esquema de cores", color_scheme_display)
     config("Baixar imagens", config_data['download_images'])
@@ -401,10 +385,9 @@ Variáveis de ambiente disponíveis:
         spreadsheet_id=config_data['spreadsheet_id'],
         sheet_name=config_data['sheet_name'],
         output_filename=config_data['output_filename'],
-        catalog_type=config_data['catalog_type'],
         download_images=config_data['download_images'],
-        template_name=config_data.get('template_name'),
-        color_scheme=config_data.get('color_scheme')
+        color_scheme=config_data.get('color_scheme'),
+        columns=config_data.get('columns', 3)
     )
     
     sys.exit(0 if success_flag else 1)

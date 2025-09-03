@@ -1,6 +1,7 @@
 """
 Construtor de PDF para o catálogo
 """
+import os
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime
@@ -147,8 +148,6 @@ class PDFBuilder:
         
         # Informações adicionais
         info_parts = []
-        if product.get("category"):
-            info_parts.append(f"Categoria: {product['category']}")
         if product.get("size"):
             info_parts.append(f"Tamanho: {product['size']}")
         if product.get("color"):
@@ -358,7 +357,9 @@ class PDFBuilder:
                 'titulo': 'Thuca Kids',
                 'data_geracao': self._get_portuguese_date(),
                 'total_produtos': len(products),
-                'logo_path': self._find_logo_file()
+                'logo_path': self._find_logo_file(),
+                'contato': os.getenv('CONTATO', ''),
+                'endereco': os.getenv('ENDERECO', '')
             }
             
             # Adiciona contexto customizado se fornecido

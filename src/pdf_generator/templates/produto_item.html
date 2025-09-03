@@ -22,11 +22,8 @@
         <p class="descricao">{{ produto.description }}</p>
         {% endif %}
         
-        {% if produto.category or produto.size or produto.color %}
+        {% if produto.size or produto.color %}
         <div class="detalhes">
-            {% if produto.category %}
-            <span class="detalhe"><strong>Categoria:</strong> {{ produto.category }}</span>
-            {% endif %}
             {% if produto.size %}
             <span class="detalhe"><strong>Tamanho:</strong> {{ produto.size }}</span>
             {% endif %}
