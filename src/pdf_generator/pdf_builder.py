@@ -324,7 +324,7 @@ class PDFBuilder:
             return False
     
     def generate_html_catalog(self, products: List[Dict[str, Any]], 
-                             template_name: str = "catalogo_moderno.html",
+                             template_name: str = "catalogo_simples.html",
                              output_filename: str = None,
                              custom_context: Dict[str, Any] = None,
                              color_scheme: str = None) -> bool:

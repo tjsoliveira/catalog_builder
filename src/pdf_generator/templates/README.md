@@ -1,19 +1,10 @@
-# Templates HTML/CSS para Catálogos
+# Template HTML/CSS para Catálogos
 
-Este diretório contém templates HTML/CSS que podem ser usados para gerar catálogos em PDF com designs personalizados.
+Este diretório contém o template HTML/CSS padrão para gerar catálogos em PDF.
 
-## Templates Disponíveis
+## Template Disponível
 
-### 1. catalogo_moderno.html + catalogo_moderno.css
-- **Design**: Moderno e elegante
-- **Layout**: Grid responsivo de produtos
-- **Características**: 
-  - Cards de produtos com sombras
-  - Imagens otimizadas
-  - Informações organizadas
-  - Cores modernas
-
-### 2. catalogo_simples.html + catalogo_simples.css
+### catalogo_simples.html + catalogo_simples.css
 - **Design**: Simples e limpo
 - **Layout**: Lista vertical de produtos
 - **Características**:
@@ -26,10 +17,10 @@ Este diretório contém templates HTML/CSS que podem ser usados para gerar catá
 
 ### Via Linha de Comando
 ```bash
-# Usar template moderno
-python main.py --type html --template catalogo_moderno.html
+# Usar template padrão
+python main.py --type html
 
-# Usar template simples
+# Ou especificar explicitamente
 python main.py --type html --template catalogo_simples.html
 ```
 
@@ -42,7 +33,7 @@ builder = PDFBuilder()
 # Gerar catálogo com template HTML
 success = builder.generate_html_catalog(
     products=produtos,
-    template_name="catalogo_moderno.html",
+    template_name="catalogo_simples.html",
     output_filename="meu_catalogo.pdf"
 )
 ```
@@ -136,4 +127,4 @@ success = builder.generate_catalog_from_canva(
 
 ## Exemplo Completo
 
-Veja os templates `catalogo_moderno.html` e `catalogo_simples.html` como referência para criar seus próprios templates.
+Veja o template `catalogo_simples.html` como referência para criar seus próprios templates.

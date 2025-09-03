@@ -130,7 +130,7 @@ class CatalogBuilder:
         if catalog_type == "simple":
             success_flag = self.pdf_builder.generate_simple_catalog(products, output_filename)
         elif catalog_type == "html":
-            template = template_name or "catalogo_moderno.html"
+            template = template_name or "catalogo_simples.html"
             # Define esquema 'suave' como padrão se nenhum for especificado
             default_scheme = color_scheme or "suave"
             success_flag = self.pdf_builder.generate_html_catalog(
@@ -288,7 +288,7 @@ Exemplos de uso:
    python main.py --type simple --no-images
 
 4. Usando templates HTML/CSS:
-   python main.py --type html --template catalogo_moderno.html
+   python main.py --type html --template catalogo_simples.html
 
 Variáveis de ambiente disponíveis:
 - SPREADSHEET_ID: ID da planilha (obrigatório)
