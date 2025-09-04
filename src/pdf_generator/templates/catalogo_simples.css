@@ -98,47 +98,7 @@ body {
     color: inherit;
 }
 
-/* Grid de produtos - colunas dinâmicas */
-.products-list {
-    display: grid;
-    gap: 6px;
-    max-width: 100%;
-    break-before: avoid !important;
-    page-break-before: avoid !important;
-    margin-top: 0 !important;
-    margin-bottom: 0;
-    padding-top: 0 !important;
-}
 
-/* Produto individual - layout horizontal com imagem à esquerda */
-.produto {
-    display: flex;
-    flex-direction: row;
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: var(--produto-padding);
-    margin-bottom: 0;
-    gap: var(--produto-gap);
-    min-height: var(--produto-min-height);
-    max-height: var(--produto-max-height);
-    max-width: 100%;
-    overflow: hidden;
-    
-    /* Controle rigoroso de quebra */
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    orphans: 3;
-    widows: 3;
-}
-
-/* Primeiro produto - FORÇAR na primeira página */
-.produto:first-child {
-    break-before: avoid !important;
-    page-break-before: avoid !important;
-    margin-top: 0 !important;
-    padding-top: 8px !important;
-}
 
 /* Container sem espaços extras */
 .container {
@@ -146,56 +106,6 @@ body {
     padding: 0;
 }
 
-/* Imagem do produto - metade do card à esquerda */
-.produto-imagem {
-    flex: 0 0 50%;
-    height: 100%;
-    min-height: var(--imagem-min-height);
-    max-height: var(--imagem-max-height);
-    overflow: hidden;
-    background-color: var(--background-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    border: 1px solid var(--border-color);
-}
-
-.img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transform: scale(0.8);
-}
-
-.sem-imagem {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    color: var(--text-muted);
-    font-size: 0.7em;
-    text-align: center;
-    background: linear-gradient(135deg, var(--background-color) 0%, var(--border-color) 100%);
-}
-
-/* Informações do produto - metade do card à direita */
-.produto-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    justify-content: space-between;
-    overflow: hidden;
-}
-
-.info-principal {
-    display: flex;
-    flex-direction: column;
-    gap: var(--produto-internal-gap);
-    margin-bottom: var(--produto-margin-bottom);
-}
 
 .nome-preco {
     display: flex;
@@ -204,67 +114,10 @@ body {
     margin-bottom: 0;
 }
 
-.nome {
-    font-size: 0.9em;
-    color: var(--text-primary);
-    font-weight: bold;
-    line-height: 1.0;
-    flex: 1;
-    margin-right: 8px;
-}
 
-.preco {
-    font-size: 0.95em;
-    color: var(--accent-color);
-    font-weight: bold;
-    white-space: nowrap;
-}
 
-.descricao {
-    color: var(--text-secondary);
-    font-size: 0.8em;
-    line-height: var(--descricao-line-height);
-    margin-bottom: 0;
-}
 
-.detalhes {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
 
-.detalhe {
-    font-size: 0.8em;
-    color: var(--text-muted);
-    padding: 1px 4px;
-    background-color: var(--background-color);
-    border-radius: 3px;
-    border-left: 2px solid var(--accent-color);
-    line-height: 1.2;
-}
-
-.detalhe strong {
-    color: var(--text-primary);
-}
-
-/* Rodapé */
-.footer {
-    margin-top: 10px;
-    padding-top: 6px;
-    border-top: 1px solid var(--border-color);
-    text-align: center;
-    break-inside: avoid;
-    page-break-inside: avoid;
-}
-
-.footer-content {
-    color: var(--text-muted);
-    font-size: 0.8em;
-}
-
-.footer-content p {
-    margin-bottom: 2px;
-}
 
 /* Classes para compatibilidade com template simples */
 .bg-white { background-color: var(--background-color); }
@@ -273,7 +126,7 @@ body {
 .bg-red-500 { background-color: var(--accent-color); }
 .bg-green-500 { background-color: var(--accent-color); }
 
-.text-white { color: var(--text-primary); }
+.text-white { color: white !important; }
 .text-gray-400 { color: var(--text-muted); }
 .text-gray-600 { color: var(--text-secondary); }
 .text-gray-800 { color: var(--text-primary); }
@@ -370,14 +223,6 @@ body {
     min-height: 180px;
 }
 
-/* Badges de destaque */
-.badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    color: white;
-}
 
 /* Rodapé para template simples */
 footer {
