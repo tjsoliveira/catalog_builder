@@ -4,8 +4,8 @@ Este diretório contém o template HTML/CSS padrão para gerar catálogos em PDF
 
 ## Template Padrão
 
-### catalogo_v0.html + catalogo_v0.css
-- **Design**: Moderno baseado no v0.app
+### catalogo_simples.html + catalogo_simples.css
+- **Design**: Moderno e elegante
 - **Layout**: Grid dinâmico com cards elegantes (padrão: 3 colunas)
 - **Características**:
   - Design inspirado no Tailwind CSS
@@ -25,12 +25,8 @@ python main.py
 python main.py --columns 2
 python main.py --columns 4
 
-# Com esquema de cores específico
-python main.py --color-scheme dark_mode
-python main.py --color-scheme minimal
-
 # Combinando opções
-python main.py --columns 2 --color-scheme dark_mode --output meu_catalogo.pdf
+python main.py --columns 2 --output meu_catalogo.pdf
 ```
 
 ### Via Código Python
@@ -52,11 +48,10 @@ success = builder.generate_catalog(
     columns=2
 )
 
-# Com esquema de cores específico
+# Com número de colunas personalizado
 success = builder.generate_catalog(
     products=produtos,
     output_filename="meu_catalogo.pdf",
-    color_scheme="dark_mode",
     columns=4
 )
 ```
@@ -96,7 +91,7 @@ Seu template HTML deve usar a sintaxe Jinja2 para variáveis:
 - `titulo`: Título do catálogo (padrão: "Catálogo de Produtos")
 - `subtitulo`: Subtítulo do catálogo (opcional)
 - `logo_path`: Caminho da logo (se disponível)
-- `columns`: Número de colunas no grid (padrão: 3)
+- `columns`: Número de colunas no grid (padrão: 2)
 - `contato`: Informações de contato (opcional)
 - `endereco`: Endereço (opcional)
 
@@ -152,7 +147,7 @@ success = builder.generate_catalog_from_canva(
 
 ## Exemplo Completo
 
-Veja o template `catalogo_v0.html` como referência para criar seus próprios templates.
+Veja o template `catalogo_simples.html` como referência para criar seus próprios templates.
 
 ## Configuração de Colunas
 
@@ -179,5 +174,5 @@ builder.generate_catalog(products, columns=2)
 
 ### No Template HTML
 ```html
-<div class="grid gap-6" style="grid-template-columns: repeat({{ columns or 3 }}, 1fr);">
+<div class="grid gap-6" style="grid-template-columns: repeat({{ columns or 2 }}, 1fr);">
 ```

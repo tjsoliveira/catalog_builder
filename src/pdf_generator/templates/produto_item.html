@@ -1,36 +1,42 @@
-<!-- Template básico para um produto individual -->
-<div class="produto">
-    <div class="produto-imagem">
+<!-- Template para um produto individual -->
+<div class="item-card bg-gray-100 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="relative">
+        <!-- Imagem do produto -->
         {% if produto.local_image_path %}
-        <img src="file://{{ produto.local_image_path }}" alt="{{ produto.name }}" class="img">
+        <img src="file://{{ produto.local_image_path }}" 
+             alt="{{ produto.name }}" 
+             class="item-image w-full bg-gray-100">
         {% else %}
-        <div class="sem-imagem">
-            <span>Sem imagem</span>
+        <div class="item-image w-full bg-gray-100 flex items-center justify-center">
+            <span class="text-gray-400 text-sm">Sem imagem</span>
+        </div>
+        {% endif %}
+        
+        <!-- Badge de destaque (opcional) -->
+        {% if produto.destaque and produto.destaque.strip() %}
+        <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+            {{ produto.destaque }}
         </div>
         {% endif %}
     </div>
-    
-    <div class="produto-info">
-        <div class="info-principal">
-            <h3 class="nome">{{ produto.name }}</h3>
-            {% if produto.price %}
-            <div class="preco">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</div>
-            {% endif %}
+    <div class="p-4">
+        <!-- Nome e preço na mesma linha -->
+        <div class="nome-preco">
+            <h3 class="font-semibold text-gray-800">{{ produto.name }}</h3>
+            <p class="text-lg font-bold text-gray-900">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</p>
         </div>
         
-        {% if produto.description %}
-        <p class="descricao">{{ produto.description }}</p>
-        {% endif %}
-        
-        {% if produto.size or produto.color %}
-        <div class="detalhes">
+        <!-- Informações do produto -->
+        <div class="text-sm text-gray-600 mb-2">
             {% if produto.size %}
-            <span class="detalhe"><strong>Tamanho:</strong> {{ produto.size }}</span>
+            <p>Tamanho: {{ produto.size }}</p>
             {% endif %}
             {% if produto.color %}
-            <span class="detalhe"><strong>Cor:</strong> {{ produto.color }}</span>
+            <p>Cor: {{ produto.color }}</p>
+            {% endif %}
+            {% if produto.description %}
+            <p class="mt-1">{{ produto.description }}</p>
             {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>

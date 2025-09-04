@@ -54,6 +54,7 @@ SHEETS_CONFIG = {
         "category": "Categoria",
         "size": "Tamanho",
         "color": "Cor",
-        "quantity": "Quantidade"
+        "quantity": "Quantidade",
+        "highlight": "Destaque"
     }
 }

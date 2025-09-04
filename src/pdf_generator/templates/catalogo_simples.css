@@ -1,7 +1,10 @@
 /* CSS otimizado para catálogo com template de produto */
+/* Variáveis CSS para facilitar alterações */
+
 @page {
     size: A4;
-    margin: 8mm;
+    margin: 0;
+    background-color: var(--background-color);
 }
 
 * {
@@ -13,10 +16,11 @@
 body {
     font-family: 'Arial', 'Helvetica', sans-serif;
     line-height: 1.5;
-    color: #333;
-    background-color: #fff;
+    color: var(--text-primary);
+    background-color: var(--background-color);
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 8mm !important;
+    min-height: 100vh;
 }
 
 .container {
@@ -38,18 +42,66 @@ body {
 }
 
 .logo {
-    max-width: 120px;
-    max-height: 80px;
+    max-width: 180px;
+    max-height: 120px;
+    width: auto;
+    height: auto;
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto;
 }
 
-/* Lista de produtos em grid de 2 colunas */
+/* Seção de contato */
+.contact-info {
+    margin-top: 12px;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.contact-info img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.contact-info .flex {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+/* Links de contato */
+.contact-link {
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.contact-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+.contact-link:visited {
+    color: inherit;
+}
+
+/* Grid de produtos - colunas dinâmicas */
 .products-list {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 6px;
     max-width: 100%;
     break-before: avoid !important;
     page-break-before: avoid !important;
@@ -62,14 +114,14 @@ body {
 .produto {
     display: flex;
     flex-direction: row;
-    background: #fff;
-    border: 1px solid #e0e0e0;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 4px;
+    padding: var(--produto-padding);
     margin-bottom: 0;
-    gap: 6px;
-    min-height: 40px;
-    max-height: 120px;
+    gap: var(--produto-gap);
+    min-height: var(--produto-min-height);
+    max-height: var(--produto-max-height);
     max-width: 100%;
     overflow: hidden;
     
@@ -98,15 +150,15 @@ body {
 .produto-imagem {
     flex: 0 0 50%;
     height: 100%;
-    min-height: 32px;
-    max-height: 42px;
+    min-height: var(--imagem-min-height);
+    max-height: var(--imagem-max-height);
     overflow: hidden;
-    background-color: #f8f9fa;
+    background-color: var(--background-color);
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 3px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .img {
@@ -122,10 +174,10 @@ body {
     justify-content: center;
     height: 100%;
     width: 100%;
-    color: #95a5a6;
+    color: var(--text-muted);
     font-size: 0.7em;
     text-align: center;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--background-color) 0%, var(--border-color) 100%);
 }
 
 /* Informações do produto - metade do card à direita */
@@ -141,30 +193,38 @@ body {
 .info-principal {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin-bottom: 2px;
+    gap: var(--produto-internal-gap);
+    margin-bottom: var(--produto-margin-bottom);
+}
+
+.nome-preco {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
 }
 
 .nome {
-    font-size: 0.8em;
-    color: #2c3e50;
+    font-size: 0.9em;
+    color: var(--text-primary);
     font-weight: bold;
-    line-height: 1.1;
-    margin-bottom: 1px;
+    line-height: 1.0;
+    flex: 1;
+    margin-right: 8px;
 }
 
 .preco {
-    font-size: 0.85em;
-    color: #e74c3c;
+    font-size: 0.95em;
+    color: var(--accent-color);
     font-weight: bold;
-    margin-bottom: 2px;
+    white-space: nowrap;
 }
 
 .descricao {
-    color: #7f8c8d;
-    font-size: 0.7em;
-    line-height: 1.2;
-    margin-bottom: 2px;
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    line-height: var(--descricao-line-height);
+    margin-bottom: 0;
 }
 
 .detalhes {
@@ -174,31 +234,31 @@ body {
 }
 
 .detalhe {
-    font-size: 0.7em;
-    color: #95a5a6;
+    font-size: 0.8em;
+    color: var(--text-muted);
     padding: 1px 4px;
-    background-color: #f8f9fa;
+    background-color: var(--background-color);
     border-radius: 3px;
-    border-left: 2px solid #3498db;
+    border-left: 2px solid var(--accent-color);
     line-height: 1.2;
 }
 
 .detalhe strong {
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 /* Rodapé */
 .footer {
     margin-top: 10px;
     padding-top: 6px;
-    border-top: 1px solid #ecf0f1;
+    border-top: 1px solid var(--border-color);
     text-align: center;
     break-inside: avoid;
     page-break-inside: avoid;
 }
 
 .footer-content {
-    color: #95a5a6;
+    color: var(--text-muted);
     font-size: 0.8em;
 }
 
@@ -206,20 +266,196 @@ body {
     margin-bottom: 2px;
 }
 
+/* Classes para compatibilidade com template simples */
+.bg-white { background-color: var(--background-color); }
+.bg-gray-100 { background-color: var(--background-color); }
+.bg-gray-200 { background-color: var(--border-color); }
+.bg-red-500 { background-color: var(--accent-color); }
+.bg-green-500 { background-color: var(--accent-color); }
+
+.text-white { color: var(--text-primary); }
+.text-gray-400 { color: var(--text-muted); }
+.text-gray-600 { color: var(--text-secondary); }
+.text-gray-800 { color: var(--text-primary); }
+.text-gray-900 { color: var(--text-primary); }
+
+.text-xs { font-size: 0.75rem; line-height: 0.9rem; }
+.text-sm { font-size: 0.9rem; line-height: 1.1rem; }
+.text-lg { font-size: 1.1rem; line-height: 1.3rem; }
+.text-3xl { font-size: 1.5rem; line-height: 1.7rem; }
+
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.p-4 { padding: var(--p4-padding); }
+.p-6 { padding: var(--p6-padding); }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+
+.mb-1 { margin-bottom: var(--mb1-margin); }
+.mb-2 { margin-bottom: var(--mb2-margin); }
+.mb-4 { margin-bottom: var(--mb4-margin); }
+.mb-8 { margin-bottom: var(--mb8-margin); }
+.mt-1 { margin-top: var(--mt1-margin); }
+.mt-12 { margin-top: var(--mt12-margin); }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.border { border-width: 1px; border-style: solid; }
+.border-gray-200 { border-color: var(--border-color); }
+.border-b-2 { border-bottom-width: 2px; }
+.border-t-2 { border-top-width: 2px; }
+
+.rounded { border-radius: 0.25rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+
+.overflow-hidden { overflow: hidden; }
+
+.text-center { text-align: center; }
+
+.relative { position: relative; }
+.absolute { position: absolute; }
+.top-2 { top: 0.5rem; }
+.right-2 { right: 0.5rem; }
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+
+.w-full { width: 100%; }
+
+/* Grid layout */
+.grid { display: grid; }
+.gap-6 { gap: 2.5rem; }
+
+/* Cards de produto para template simples */
+.item-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    transition: transform 0.2s ease-in-out;
+    max-height: 760px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Container da imagem */
+.item-card .relative {
+    flex: 0 0 auto;
+    height: 300px;
+    overflow: hidden;
+}
+
+/* Imagens dos produtos para template simples */
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: var(--background-color);
+}
+
+/* Container de informações do produto */
+.item-card .p-4 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem;
+    min-height: 180px;
+}
+
+/* Badges de destaque */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    color: white;
+}
+
+/* Rodapé para template simples */
+footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .gap-6 {
+        gap: 0.4rem;
+    }
+    
+    .p-6 {
+        padding: 0.5rem;
+    }
+    
+    .text-3xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .gap-6 {
+        gap: 0.3rem;
+    }
+}
+
 /* Regras específicas para impressão */
 @media print {
+    body {
+        margin: 0;
+        padding: 0.5rem;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
     .header {
         break-after: avoid !important;
         page-break-after: avoid !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 0;
+        padding: 10px 0;
     }
+    
+    /* Adiciona espaço no topo para compensar o header fixo */
+    body {
+        padding-top: 80px;
+    }
+    
     
     .products-list {
         break-before: avoid !important;
         page-break-before: avoid !important;
         display: grid;
-        grid-template-columns: 1fr 1fr;
         gap: 12px;
         max-width: 100%;
     }
@@ -237,8 +473,47 @@ body {
         margin-top: 0 !important;
     }
     
+    .item-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 0.8rem;
+        max-height: 380px;
+    }
+    
+    .item-card .relative {
+        height: 240px;
+    }
+    
+    .grid {
+        display: grid;
+        gap: 1.2rem;
+    }
+    
+    .p-6 {
+        padding: 0.4rem;
+    }
+    
+    .mb-8 {
+        margin-bottom: 0.8rem;
+    }
+    
+    .mt-12 {
+        margin-top: 0.8rem;
+    }
+    
     /* Evita quebra no meio de grupos de produtos */
     .produto:nth-child(5n) {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+    
+    /* Evitar quebras de página desnecessárias */
+    .item-card:first-child {
+        break-before: avoid;
+        page-break-before: avoid;
+    }
+    
+    .item-card:last-child {
         break-after: avoid;
         page-break-after: avoid;
     }
@@ -259,3 +534,81 @@ body {
     orphans: 3;
     widows: 3;
 }
+
+/* Aplicação de esquemas de cores dinâmicos */
+/* Esquema Default */
+body.scheme-default {
+    /* Cores do esquema */
+    --primary-color: #F27C38;
+    --secondary-color: #6b7280;
+    --accent-color: #03A696;
+    --background-color: #FFFFFF;
+    --border-color: #73B8BF;
+    --text-primary: #755E8C;
+    --text-secondary: #73B8BF;
+    --text-muted: #03A696;
+    
+    /* Alturas dos produtos */
+    --produto-min-height: 67px;
+    --produto-max-height: 330px;
+    --item-card-max-height: 800px;
+    
+    /* Espaçamentos */
+    --produto-padding: 5px;
+    --produto-gap: 8px;
+    --produto-internal-gap: 0px;
+    --produto-margin-bottom: 2px;
+    
+    /* Padding das classes utilitárias */
+    --p4-padding: 0.9rem;
+    --p6-padding: 1.05rem;
+    --gap6-gap: 0.9rem;
+    
+    /* Margens das classes utilitárias */
+    --mb1-margin: 0.27rem;
+    --mb2-margin: 0.52rem;
+    --mb4-margin: 1.05rem;
+    --mb8-margin: 1.8rem;
+    --mt1-margin: 0.27rem;
+    --mt12-margin: 2.1rem;
+    
+    /* Imagens */
+    --imagem-min-height: 25px;
+    --imagem-max-height: 35px;
+    
+    /* Line heights */
+    --nome-line-height: 1.1;
+    --descricao-line-height: 1.15;
+}
+
+/* Apenas esquema default - sistema simplificado */
+
+/* Aplicação dinâmica de cores via CSS custom properties */
+body {
+    background-color: var(--background-color);
+    color: var(--text-primary);
+}
+
+.border-gray-200 {
+    border-color: var(--border-color);
+}
+
+.text-gray-800 {
+    color: var(--text-primary);
+}
+
+.text-gray-600 {
+    color: var(--text-secondary);
+}
+
+.text-gray-400 {
+    color: var(--text-muted);
+}
+
+.bg-red-500 {
+    background-color: var(--accent-color);
+}
+
+/* Cores específicas para diferentes esquemas */
+
+/* Sistema simplificado - apenas esquema default */

@@ -78,6 +78,33 @@ class DataProcessor:
         cleaned = re.sub(r'\s+', ' ', str(text).strip())
         return cleaned
     
+    def _process_destaque(self, destaque_value: str) -> str:
+        """
+        Processa valor de destaque (TRUE/FALSE ou texto)
+        
+        Args:
+            destaque_value: Valor da coluna Destaque
+        
+        Returns:
+            Texto do destaque ou string vazia
+        """
+        if not destaque_value:
+            return ""
+        
+        # Converte para string e limpa
+        destaque_str = str(destaque_value).strip().upper()
+        
+        # Se for TRUE, retorna "DESTAQUE"
+        if destaque_str == "TRUE":
+            return "DESTAQUE"
+        
+        # Se for FALSE, retorna string vazia
+        if destaque_str == "FALSE":
+            return ""
+        
+        # Se for outro texto, retorna o texto limpo
+        return self.clean_text(destaque_value)
+    
     def validate_image_url(self, url: str) -> bool:
         """
         Valida se URL da imagem é válida
@@ -128,7 +155,8 @@ class DataProcessor:
                 "image_url": product.get(SHEETS_CONFIG["columns"]["image_url"], ""),
                 "category": self.clean_text(product.get(SHEETS_CONFIG["columns"]["category"], "")),
                 "size": self.clean_text(product.get(SHEETS_CONFIG["columns"]["size"], "")),
-                "color": self.clean_text(product.get(SHEETS_CONFIG["columns"]["color"], ""))
+                "color": self.clean_text(product.get(SHEETS_CONFIG["columns"]["color"], "")),
+                "destaque": self._process_destaque(product.get("Destaque", ""))  # Coluna opcional
             }
             
             # Valida URL da imagem

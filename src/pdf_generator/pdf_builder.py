@@ -326,7 +326,7 @@ class PDFBuilder:
                              template_name: str = "catalogo_simples.html",
                              output_filename: str = None,
                              custom_context: Dict[str, Any] = None,
-                             color_scheme: str = None) -> bool:
+                             color_scheme: str = "default") -> bool:
         """
         Gera PDF usando template HTML/CSS
         
@@ -335,7 +335,7 @@ class PDFBuilder:
             template_name: Nome do template HTML
             output_filename: Nome do arquivo de saída
             custom_context: Contexto adicional para o template
-            color_scheme: Nome do esquema de cores a aplicar
+            color_scheme: Nome do esquema de cores (sempre "default")
         
         Returns:
             True se PDF foi gerado com sucesso
@@ -359,7 +359,11 @@ class PDFBuilder:
                 'total_produtos': len(products),
                 'logo_path': self._find_logo_file(),
                 'contato': os.getenv('CONTATO', ''),
-                'endereco': os.getenv('ENDERECO', '')
+                'endereco': os.getenv('ENDERECO', ''),
+                'whatsapp': os.getenv('WHATSAPP', ''),
+                'instagram': os.getenv('INSTAGRAM', ''),
+                'whatsapp_icon_path': self._find_icon_file('whatsapp.svg'),
+                'instagram_icon_path': self._find_icon_file('instagram.svg')
             }
             
             # Adiciona contexto customizado se fornecido
@@ -369,28 +373,21 @@ class PDFBuilder:
             # Determina arquivo CSS baseado no template
             css_file = template_name.replace('.html', '.css')
             
-            # Aplica esquema de cores se especificado
-            css_content = None
-            if color_scheme:
-                logo_path = self._find_logo_file()
-                # Gera esquemas (analisa logo se disponível, senão usa padrão)
-                color_schemes = self.color_generator.generate_color_schemes(logo_path)
-                
-                # Lê CSS original
-                css_path = self.html_engine.templates_dir / css_file
-                if css_path.exists():
-                    original_css = css_path.read_text(encoding='utf-8')
-                    # Aplica esquema de cores
-                    css_content = self.color_generator.apply_scheme_to_css(original_css, color_scheme)
-                    info(f"Aplicando esquema de cores: {color_scheme}")
-                else:
-                    warning(f"Arquivo CSS não encontrado: {css_file}")
+            # Sistema simplificado - sempre usa esquema default
+            css_path = self.html_engine.templates_dir / css_file
+            if css_path.exists():
+                css_content = css_path.read_text(encoding='utf-8')
+                info("Aplicando esquema de cores padrão")
+            else:
+                warning(f"Arquivo CSS não encontrado: {css_file}")
+                css_content = None
             
             # Gera PDF usando template HTML
             output_path = OUTPUT_DIR / output_filename
             if css_content:
-                # Usa CSS customizado com esquema de cores
+                # Renderiza HTML e aplica esquema de cores
                 html_content = self.html_engine.render_template(template_name, context)
+                html_content = self.color_generator.apply_scheme_to_html(html_content, "default")
                 success_flag = self.html_engine.generate_pdf_from_html(
                     html_content=html_content,
                     css_content=css_content,
@@ -571,6 +568,35 @@ class PDFBuilder:
             
         except Exception as e:
             exception("Erro ao procurar arquivo de logo", e)
+            return None
+    
+    def _find_icon_file(self, icon_name: str) -> Optional[str]:
+        """
+        Procura por arquivo de ícone na pasta assets/icons
+        
+        Args:
+            icon_name: Nome do arquivo do ícone (ex: 'whatsapp.svg')
+        
+        Returns:
+            Caminho para o arquivo do ícone ou None se não encontrado
+        """
+        try:
+            icon_dir = Path("assets/icons")
+            if not icon_dir.exists():
+                debug("Pasta de ícones não encontrada")
+                return None
+            
+            icon_file = icon_dir / icon_name
+            if icon_file.exists():
+                absolute_path = icon_file.resolve()
+                debug(f"Ícone encontrado: {absolute_path}")
+                return str(absolute_path)
+            
+            debug(f"Ícone não encontrado: {icon_name}")
+            return None
+            
+        except Exception as e:
+            exception(f"Erro ao procurar arquivo de ícone {icon_name}", e)
             return None
     
     def _get_portuguese_date(self) -> str:

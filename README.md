@@ -10,7 +10,7 @@ Um sistema Python que conecta com Google Sheets, baixa dados e imagens das roupa
 - ✅ **Download automático de imagens** - Baixa e otimiza imagens dos produtos
 - ✅ **Geração de PDF profissional** - Layout em grid com design elegante
 - ✅ **Processamento de dados** - Valida e limpa informações dos produtos
-- ✅ **Múltiplos estilos** - Templates minimalista, elegante e moderno
+- ✅ **Design elegante** - Template moderno e profissional
 - ✅ **Totalmente automatizado** - Um comando gera o catálogo completo
 - ✅ **Configuração via variáveis de ambiente** - Configuração flexível e segura
 
@@ -61,6 +61,12 @@ SHEET_NAME=Sheet1
 OUTPUT_FILENAME=
 CATALOG_TYPE=grid
 DOWNLOAD_IMAGES=true
+
+# Informações de contato (opcionais)
+WHATSAPP=(11) 99999-9999
+INSTAGRAM=@thucakids
+CONTATO=Loja • Tel: (11) 9999-9999
+ENDERECO=Rua das Flores, 123 - Centro - SP
 ```
 
 ## 📊 Estrutura do Google Sheets
@@ -108,6 +114,10 @@ python main.py --sheet-name "Estoque" --output "catalogo_2024.pdf" --type grid
 | `OUTPUT_FILENAME` | ❌ | auto | Nome do arquivo de saída |
 | `CATALOG_TYPE` | ❌ | grid | Tipo: grid ou simple |
 | `DOWNLOAD_IMAGES` | ❌ | true | Baixar imagens: true/false |
+| `WHATSAPP` | ❌ | - | Número do WhatsApp (ex: (11) 99999-9999) |
+| `INSTAGRAM` | ❌ | - | Username do Instagram (ex: @thucakids) |
+| `CONTATO` | ❌ | - | Informações gerais de contato |
+| `ENDERECO` | ❌ | - | Endereço da loja |
 
 ### Configurações do PDF (config/settings.py)
 

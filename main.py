@@ -103,8 +103,7 @@ class CatalogBuilder:
     def generate_catalog(self, products: List[Dict[str, Any]], 
                         output_filename: str = None, 
                         custom_context: Dict[str, Any] = None,
-                        color_scheme: str = None,
-                        columns: int = 3) -> bool:
+                        columns: int = 2) -> bool:
         """
         Gera catálogo em PDF usando template moderno
         
@@ -112,8 +111,7 @@ class CatalogBuilder:
             products: Lista de produtos
             output_filename: Nome do arquivo de saída
             custom_context: Contexto adicional para templates HTML
-            color_scheme: Esquema de cores a aplicar (analisa logo se disponível)
-            columns: Número de colunas no grid (padrão: 3)
+            columns: Número de colunas no grid (padrão: 2)
         
         Returns:
             True se catálogo foi gerado com sucesso
@@ -125,10 +123,8 @@ class CatalogBuilder:
         
         progress(f"Gerando catálogo: {output_filename}")
         
-        # Usa sempre o template v0 (moderno e elegante)
-        template = "catalogo_v0.html"
-        # Define esquema 'default' como padrão se nenhum for especificado
-        default_scheme = color_scheme or "default"
+        # Usa o template simples (moderno e elegante)
+        template = "catalogo_simples.html"
         
         # Adiciona o número de colunas ao contexto
         if custom_context is None:
@@ -136,7 +132,7 @@ class CatalogBuilder:
         custom_context['columns'] = columns
         
         success_flag = self.pdf_builder.generate_html_catalog(
-            products, template, output_filename, custom_context, default_scheme
+            products, template, output_filename, custom_context, "default"
         )
         
         if success_flag:
@@ -175,7 +171,7 @@ class CatalogBuilder:
     
     def run_full_process(self, spreadsheet_id: str, sheet_name: str = "Sheet1", 
                         output_filename: str = None, download_images: bool = True,
-                        color_scheme: str = None, columns: int = 3) -> bool:
+                        columns: int = 2) -> bool:
         """
         Executa processo completo de geração do catálogo
         
@@ -184,8 +180,7 @@ class CatalogBuilder:
             sheet_name: Nome da aba
             output_filename: Nome do arquivo de saída
             download_images: Se deve baixar imagens
-            color_scheme: Esquema de cores a aplicar
-            columns: Número de colunas no grid (padrão: 3)
+            columns: Número de colunas no grid (padrão: 2)
         
         Returns:
             True se processo foi concluído com sucesso
@@ -211,7 +206,7 @@ class CatalogBuilder:
                     return False
             
             # 4. Gera catálogo
-            success_flag = self.generate_catalog(products, output_filename, None, color_scheme, columns)
+            success_flag = self.generate_catalog(products, output_filename, None, columns)
             
             # 5. Limpa arquivos temporários
             self.cleanup()
@@ -254,7 +249,7 @@ def get_config_from_env():
     config_data['sheet_name'] = os.getenv('SHEET_NAME', 'Sheet1')
     config_data['output_filename'] = os.getenv('OUTPUT_FILENAME') or None
     config_data['download_images'] = os.getenv('DOWNLOAD_IMAGES', 'true').lower() == 'true'
-    config_data['columns'] = int(os.getenv('COLUMNS', '3'))
+    config_data['columns'] = int(os.getenv('COLUMNS', '2'))
     
     return config_data
 
@@ -277,9 +272,6 @@ Exemplos de uso:
 3. Com número de colunas personalizado:
    python main.py --columns 2
 
-4. Com esquema de cores específico:
-   python main.py --color-scheme dark_mode
-
 Variáveis de ambiente disponíveis:
 - SPREADSHEET_ID: ID da planilha (obrigatório)
 - SHEET_NAME: Nome da aba (padrão: Sheet1)
@@ -287,7 +279,7 @@ Variáveis de ambiente disponíveis:
 - CONTATO: Informações de contato (ex: "Loja • Tel: (11) 9999-9999")
 - ENDERECO: Endereço da loja (ex: "Rua das Flores, 123 - Centro - SP")
 - DOWNLOAD_IMAGES: Baixar imagens (true/false)
-- COLUMNS: Número de colunas no grid (padrão: 3)
+- COLUMNS: Número de colunas no grid (padrão: 2)
         """
     )
     
@@ -305,20 +297,11 @@ Variáveis de ambiente disponíveis:
     parser.add_argument(
         "--columns", "-col",
         type=int,
-        default=3,
-        help="Número de colunas no grid (padrão: 3)"
+        default=2,
+        help="Número de colunas no grid (padrão: 2)"
     )
     
-    parser.add_argument(
-        "--color-scheme", "-c",
-        help="Esquema de cores a aplicar (baseado na logo)"
-    )
-    
-    parser.add_argument(
-        "--list-schemes",
-        action="store_true",
-        help="Lista esquemas de cores disponíveis e sai"
-    )
+    # Sistema simplificado - apenas esquema padrão
     
     parser.add_argument(
         "--no-images",
@@ -333,19 +316,7 @@ Variáveis de ambiente disponíveis:
     
     args = parser.parse_args()
     
-    # Se solicitado listar esquemas de cores
-    if args.list_schemes:
-        from src.pdf_generator.pdf_builder import PDFBuilder
-        builder = PDFBuilder()
-        schemes = builder.list_available_color_schemes()
-        
-        section("Esquemas de Cores Disponíveis")
-        for key, name in schemes.items():
-            info(f"  {key}: {name}")
-        
-        print("\nUso: python main.py --color-scheme <nome_do_esquema>")
-        print("Exemplo: python main.py --color-scheme suave")
-        sys.exit(0)
+    # Sistema simplificado - sem opções de esquemas
     
     # Obtém configurações do .env
     config_data = get_config_from_env()
@@ -361,8 +332,7 @@ Variáveis de ambiente disponíveis:
         config_data['output_filename'] = args.output
     if args.columns:
         config_data['columns'] = args.columns
-    if args.color_scheme:
-        config_data['color_scheme'] = args.color_scheme
+    # Sistema simplificado - sem opções de esquemas
     if args.no_images:
         config_data['download_images'] = False
     
@@ -371,8 +341,6 @@ Variáveis de ambiente disponíveis:
     config("Planilha", config_data['spreadsheet_id'])
     config("Aba", config_data['sheet_name'])
     config("Colunas", config_data['columns'])
-    color_scheme_display = config_data.get('color_scheme') or "suave (padrão)"
-    config("Esquema de cores", color_scheme_display)
     config("Baixar imagens", config_data['download_images'])
     if config_data['output_filename']:
         config("Arquivo de saída", config_data['output_filename'])
@@ -386,8 +354,7 @@ Variáveis de ambiente disponíveis:
         sheet_name=config_data['sheet_name'],
         output_filename=config_data['output_filename'],
         download_images=config_data['download_images'],
-        color_scheme=config_data.get('color_scheme'),
-        columns=config_data.get('columns', 3)
+        columns=config_data.get('columns', 2)
     )
     
     sys.exit(0 if success_flag else 1)
