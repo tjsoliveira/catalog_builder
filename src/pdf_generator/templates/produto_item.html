@@ -22,20 +22,19 @@
     <div class="p-4">
         <!-- Nome e preço na mesma linha -->
         <div class="nome-preco">
-            <p class="font-semibold text-primary">{{ produto.name }}</p>
-            <p class="text-lg font-bold text-primary">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</p>
+            <p class="font-semibold primary-color">{{ produto.name }}</p>
+            <p class="text-lg font-bold primary-color">R$ {{ "%.2f"|format(produto.price)|replace(".", ",") }}</p>
         </div>
-        
         <!-- Informações do produto -->
         <div class="text-sm text-gray-600 mb-2">
+            {% if produto.description %}
+            <p>{{ produto.description }}</p>
+            {% endif %}
             {% if produto.size %}
-            <p>Tamanho: {{ produto.size }}</p>
+            <p><span class="label-primary">Tamanho:</span> {{ produto.size }}</p>
             {% endif %}
             {% if produto.color %}
-            <p>Cor: {{ produto.color }}</p>
-            {% endif %}
-            {% if produto.description %}
-            <p class="mt-1">{{ produto.description }}</p>
+            <p><span class="label-primary">Cor:</span> {{ produto.color }}</p>
             {% endif %}
         </div>
     </div>
